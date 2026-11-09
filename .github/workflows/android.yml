@@ -1,0 +1,52 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Android NDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;29.0.14206865" > /dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> "$GITHUB_ENV"
+
+      - name: Ядро Xray (libXray)
+        run: ./scripts/build_core_android.sh
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Ключ подписи (из секретов репозитория)
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        if: env.KEYSTORE_B64 != ''
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/netro.jks"
+          printf "storeFile=%s\nstorePassword=%s\nkeyAlias=netro\nkeyPassword=%s\n" \
+            "$RUNNER_TEMP/netro.jks" "$KEY_PASSWORD" "$KEY_PASSWORD" > app/android/key.properties
+
+      - name: Сборка APK
+        working-directory: app
+        run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netro-android
+          path: app/build/app/outputs/flutter-apk/app-release.apk
