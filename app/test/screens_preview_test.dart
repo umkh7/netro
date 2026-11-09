@@ -22,7 +22,7 @@ Future<void> _font(String family, List<String> files) async {
 }
 
 Server _s(String id, String name, String cc, String proto, int? ping) =>
-    Server(id: id, name: name, country: cc, protocol: proto, outbound: const {}, ping: ping);
+    Server(id: id, name: name, country: cc, protocol: proto, outbound: const {}, ping: ping, emoji: cc == 'eu' ? '🇪🇺' : '');
 
 AppState _demo({bool on = false}) {
   final st = AppState();
@@ -32,6 +32,12 @@ AppState _demo({bool on = false}) {
       title: '⚡ U7 VPN',
       url: 'https://sub.umkh7.com/demo',
       servers: [
+        _s('u7-auto', 'Авто LTE 🚀', 'eu', 'VLESS · Reality', 41),
+        _s('u7-se2', 'Швеция LTE', 'se', 'VLESS · TLS', 58),
+        _s('u7-gb', 'Англия LTE', 'gb', 'VLESS · TLS', 66),
+        _s('u7-eu1', 'Европа LTE · 1', 'eu', 'VLESS · Reality', 52),
+        _s('u7-eu2', 'Европа LTE · 2', 'eu', 'VLESS · Reality', 49),
+        _s('u7-eu3', 'Европа LTE · 3', 'eu', 'VLESS · Reality', 57),
         _s('u7-nl', 'Нидерланды', 'nl', 'VLESS · Reality', 48),
         _s('u7-de', 'Германия', 'de', 'VLESS · Reality', 54),
         _s('u7-fi', 'Финляндия', 'fi', 'VLESS · XHTTP', 39),
@@ -39,6 +45,7 @@ AppState _demo({bool on = false}) {
         _s('u7-tr', 'Турция', 'tr', 'VMess · WebSocket', 96),
         _s('u7-us', 'США', 'us', 'Shadowsocks', 162),
         _s('u7-ru', 'Россия LTE', 'ru', 'VLESS · Reality', 63),
+        for (var i = 1; i <= 16; i++) _s('u7-st$i', 'Стелс · $i', 'eu', 'VLESS · Reality', 40 + i * 3),
       ],
       updatedAt: DateTime.now().subtract(const Duration(minutes: 5)),
       expire: DateTime.now().add(const Duration(days: 24)),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:ui' show ImageFilter;
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
@@ -21,12 +22,14 @@ String? startupLink;
 void main(List<String> args) async {
   startupLink = args.where((a) => a.startsWith('netro://')).firstOrNull;
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: Color(0xFF0E0E10),
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFF0E0E10),
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
   if (Platform.isWindows) {
     await windowManager.ensureInitialized();
     await Core.cleanupStaleProxy();
@@ -68,11 +71,11 @@ class NetroApp extends StatelessWidget {
   const NetroApp({super.key, required this.st});
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'Netro',
-        debugShowCheckedModeBanner: false,
-        theme: netroTheme(),
-        home: Shell(st: st),
-      );
+    title: 'Netro',
+    debugShowCheckedModeBanner: false,
+    theme: netroTheme(),
+    home: Shell(st: st),
+  );
 }
 
 class Shell extends StatefulWidget {
@@ -106,19 +109,23 @@ class _ShellState extends State<Shell> {
         if (i >= 0) url = Uri.decodeComponent(raw.substring(i + 4));
       }
       if (url == null || url.isEmpty) return;
-      widget.st.addFromText(url).then((s) {
-        if (mounted) setState(() => _tab = 1);
-        _toast('Добавлено: ${s.title}');
-      }).catchError((e) {
-        _toast('$e');
-      });
+      widget.st
+          .addFromText(url)
+          .then((s) {
+            if (mounted) setState(() => _tab = 1);
+            _toast('Добавлено: ${s.title}');
+          })
+          .catchError((e) {
+            _toast('$e');
+          });
     }
 
     if (startupLink != null) {
       final u = Uri.tryParse(startupLink!);
       if (u != null) handle(u);
     }
-    if (Platform.isWindows) return; // на Windows ссылка приходит аргументом запуска
+    if (Platform.isWindows)
+      return; // на Windows ссылка приходит аргументом запуска
     try {
       final first = await al.getInitialLink();
       if (first != null) handle(first);
@@ -149,8 +156,10 @@ class _ShellState extends State<Shell> {
     final sub = await showAddSheet(context, widget.st);
     if (sub != null && mounted) {
       setState(() => _tab = 1);
-      _toast('Добавлено: ${sub.title} · ${sub.servers.length} '
-          '${plural(sub.servers.length, 'сервер', 'сервера', 'серверов')}');
+      _toast(
+        'Добавлено: ${sub.title} · ${sub.servers.length} '
+        '${plural(sub.servers.length, 'сервер', 'сервера', 'серверов')}',
+      );
     }
   }
 
@@ -159,7 +168,12 @@ class _ShellState extends State<Shell> {
     final st = widget.st;
     void go(int i) => setState(() => _tab = i);
     final pages = [
-      HomeScreen(st: st, openServers: () => go(1), openSubs: () => go(2), openAdd: _openAdd),
+      HomeScreen(
+        st: st,
+        openServers: () => go(1),
+        openSubs: () => go(2),
+        openAdd: _openAdd,
+      ),
       ServersScreen(st: st, openAdd: _openAdd),
       SubsScreen(st: st, openAdd: _openAdd),
       SettingsScreen(st: st),
@@ -167,17 +181,23 @@ class _ShellState extends State<Shell> {
     return ScaffoldMessenger(
       key: _messenger,
       child: Scaffold(
+        extendBody: true,
         body: SafeArea(
           bottom: false,
-          child: Stack(children: [
-            for (var i = 0; i < pages.length; i++)
-              _FadeTab(active: i == _tab, child: pages[i]),
-          ]),
+          child: Stack(
+            children: [
+              for (var i = 0; i < pages.length; i++)
+                _FadeTab(active: i == _tab, child: pages[i]),
+            ],
+          ),
         ),
-        bottomNavigationBar: _TabBar(index: _tab, onTap: (i) {
-          if (i != _tab) HapticFeedback.selectionClick();
-          go(i);
-        }),
+        bottomNavigationBar: _TabBar(
+          index: _tab,
+          onTap: (i) {
+            if (i != _tab) HapticFeedback.selectionClick();
+            go(i);
+          },
+        ),
       ),
     );
   }
@@ -224,35 +244,54 @@ class _TabBar extends StatelessWidget {
       (Icons.layers_outlined, 'Подписки'),
       (Icons.tune_rounded, 'Настройки'),
     ];
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xF00E0E10),
-        border: Border(top: BorderSide(color: C.line)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 56,
-          child: Row(children: [
-            for (var i = 0; i < items.length; i++)
-              Expanded(
-                child: InkResponse(
-                  onTap: () => onTap(i),
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    AnimatedScale(
-                      scale: i == index ? 1.08 : 1,
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutBack,
-                      child: Icon(items[i].$1, size: 25, color: i == index ? C.accent : C.gray),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xCC0E0E10),
+            border: Border(top: BorderSide(color: C.line)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 56,
+              child: Row(
+                children: [
+                  for (var i = 0; i < items.length; i++)
+                    Expanded(
+                      child: InkResponse(
+                        onTap: () => onTap(i),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AnimatedScale(
+                              scale: i == index ? 1.08 : 1,
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutBack,
+                              child: Icon(
+                                items[i].$1,
+                                size: 25,
+                                color: i == index ? C.accent : C.gray,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              items[i].$2,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: i == index ? C.accent : C.gray,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(items[i].$2,
-                        style: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.w500, color: i == index ? C.accent : C.gray)),
-                  ]),
-                ),
+                ],
               ),
-          ]),
+            ),
+          ),
         ),
       ),
     );

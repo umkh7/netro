@@ -21,7 +21,9 @@ class _Lib {
     final dir = File(Platform.resolvedExecutable).parent.path;
     final lib = DynamicLibrary.open('$dir\\libXray.dll');
     _i = _Lib(
-      lib.lookupFunction<Pointer<Utf8> Function(Pointer<Utf8>), _InvokeC>('CGoInvoke'),
+      lib.lookupFunction<Pointer<Utf8> Function(Pointer<Utf8>), _InvokeC>(
+        'CGoInvoke',
+      ),
       lib.lookupFunction<_FreeC, _FreeD>('CGoFree'),
     );
     return _i!;
@@ -43,11 +45,13 @@ String _invokeSync(String request) {
 }
 
 /// Вызов в отдельном изоляте, чтобы долгие операции (пинг) не тормозили интерфейс.
-Future<String> winInvoke(String request) => Isolate.run(() => _invokeSync(request));
+Future<String> winInvoke(String request) =>
+    Isolate.run(() => _invokeSync(request));
 
 // ---------- Системный прокси Windows (WinINet) ----------
 
-const _inetKey = r'HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings';
+const _inetKey =
+    r'HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings';
 
 typedef _SetOptC = Int32 Function(Pointer<Void>, Uint32, Pointer<Void>, Uint32);
 typedef _SetOptD = int Function(Pointer<Void>, int, Pointer<Void>, int);
@@ -62,17 +66,54 @@ void _refreshInet() {
 }
 
 Future<void> setSystemProxy(String hostPort) async {
-  await Process.run('reg', ['add', _inetKey, '/v', 'ProxyServer', '/t', 'REG_SZ', '/d', hostPort, '/f']);
   await Process.run('reg', [
-    'add', _inetKey, '/v', 'ProxyOverride', '/t', 'REG_SZ',
-    '/d', 'localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.2*;172.30.*;172.31.*;192.168.*;<local>', '/f'
+    'add',
+    _inetKey,
+    '/v',
+    'ProxyServer',
+    '/t',
+    'REG_SZ',
+    '/d',
+    hostPort,
+    '/f',
   ]);
-  await Process.run('reg', ['add', _inetKey, '/v', 'ProxyEnable', '/t', 'REG_DWORD', '/d', '1', '/f']);
+  await Process.run('reg', [
+    'add',
+    _inetKey,
+    '/v',
+    'ProxyOverride',
+    '/t',
+    'REG_SZ',
+    '/d',
+    'localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.2*;172.30.*;172.31.*;192.168.*;<local>',
+    '/f',
+  ]);
+  await Process.run('reg', [
+    'add',
+    _inetKey,
+    '/v',
+    'ProxyEnable',
+    '/t',
+    'REG_DWORD',
+    '/d',
+    '1',
+    '/f',
+  ]);
   _refreshInet();
 }
 
 Future<void> clearSystemProxy() async {
-  await Process.run('reg', ['add', _inetKey, '/v', 'ProxyEnable', '/t', 'REG_DWORD', '/d', '0', '/f']);
+  await Process.run('reg', [
+    'add',
+    _inetKey,
+    '/v',
+    'ProxyEnable',
+    '/t',
+    'REG_DWORD',
+    '/d',
+    '0',
+    '/f',
+  ]);
   _refreshInet();
 }
 
@@ -80,5 +121,6 @@ Future<void> clearSystemProxy() async {
 Future<bool> ourProxyIsSet(String hostPort) async {
   final r = await Process.run('reg', ['query', _inetKey, '/v', 'ProxyServer']);
   final e = await Process.run('reg', ['query', _inetKey, '/v', 'ProxyEnable']);
-  return (r.stdout as String).contains(hostPort) && (e.stdout as String).contains('0x1');
+  return (r.stdout as String).contains(hostPort) &&
+      (e.stdout as String).contains('0x1');
 }

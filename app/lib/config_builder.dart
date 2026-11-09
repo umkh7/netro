@@ -21,7 +21,11 @@ const _privateNets = [
 /// Полный конфиг Xray для выбранного сервера.
 /// TUN-режим: inbound «tun» (fd добавляет Android/iOS), плюс локальные SOCKS/HTTP.
 /// Прокси-режим: только локальные SOCKS/HTTP (на Windows — системный прокси).
-Map<String, dynamic> buildXrayConfig(Server server, ConnMode mode, Settings st) {
+Map<String, dynamic> buildXrayConfig(
+  Server server,
+  ConnMode mode,
+  Settings st,
+) {
   final dnsIp = dnsById(st.dns).ip;
   final proxy = Map<String, dynamic>.from(server.outbound)..['tag'] = 'proxy';
   final sniff = {
@@ -77,11 +81,18 @@ Map<String, dynamic> buildXrayConfig(Server server, ConnMode mode, Settings st) 
     'routing': {
       'domainStrategy': 'AsIs',
       'rules': [
-        if (st.lanDirect) {'type': 'field', 'ip': _privateNets, 'outboundTag': 'direct'},
+        if (st.lanDirect)
+          {'type': 'field', 'ip': _privateNets, 'outboundTag': 'direct'},
         if (st.ruDirect)
           {
             'type': 'field',
-            'domain': ['domain:ru', 'domain:xn--p1ai', 'domain:su', 'domain:xn--80asehdb', 'domain:xn--c1avg'],
+            'domain': [
+              'domain:ru',
+              'domain:xn--p1ai',
+              'domain:su',
+              'domain:xn--80asehdb',
+              'domain:xn--c1avg',
+            ],
             'outboundTag': 'direct',
           },
       ],
@@ -100,6 +111,7 @@ String protocolLabel(Map<String, dynamic> ob) {
     'hysteria' || 'hysteria2' => 'Hysteria2',
     'socks' => 'SOCKS',
     'wireguard' => 'WireGuard',
+    'http' => 'HTTP',
     _ => p.toUpperCase(),
   };
   final ss = (ob['streamSettings'] as Map?) ?? {};

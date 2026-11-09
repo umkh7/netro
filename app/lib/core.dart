@@ -23,19 +23,32 @@ class Core {
     _winStates.add(s);
   }
 
-  static Stream<ConnState> get states => _isWin ? _winStates.stream : _states ??= _ev
-      .receiveBroadcastStream()
-      .map((e) => switch (e as String) {
-            'connecting' => ConnState.connecting,
-            'on' => ConnState.on,
-            'error' => ConnState.error,
-            _ => ConnState.off,
-          })
-      .asBroadcastStream();
+  static Stream<ConnState> get states => _isWin
+      ? _winStates.stream
+      : _states ??= _ev
+            .receiveBroadcastStream()
+            .map(
+              (e) => switch (e as String) {
+                'connecting' => ConnState.connecting,
+                'on' => ConnState.on,
+                'error' => ConnState.error,
+                _ => ConnState.off,
+              },
+            )
+            .asBroadcastStream();
 
-  static Future<Map<String, dynamic>> _invoke(String method, Map<String, dynamic> payload) async {
-    final req = jsonEncode({'apiVersion': 3, 'method': method, 'payload': payload});
-    final res = _isWin ? await win.winInvoke(req) : await _ch.invokeMethod<String>('invoke', req);
+  static Future<Map<String, dynamic>> _invoke(
+    String method,
+    Map<String, dynamic> payload,
+  ) async {
+    final req = jsonEncode({
+      'apiVersion': 3,
+      'method': method,
+      'payload': payload,
+    });
+    final res = _isWin
+        ? await win.winInvoke(req)
+        : await _ch.invokeMethod<String>('invoke', req);
     final m = jsonDecode(res ?? '{}') as Map<String, dynamic>;
     if (m['success'] != true) {
       throw CoreError((m['error'] as String?) ?? 'Ошибка ядра');
@@ -52,14 +65,24 @@ class Core {
   }
 
   /// Пинг пачками по 5 (ограничение libXray). Возвращает мс; 10000/11000 — ошибка.
-  static Future<List<int>> ping(List<Map<String, dynamic>> outbounds,
-      {String url = 'https://cp.cloudflare.com/', int timeout = 5}) async {
+  static Future<List<int>> ping(
+    List<Map<String, dynamic>> outbounds, {
+    String url = 'https://cp.cloudflare.com/',
+    int timeout = 5,
+  }) async {
     final out = <int>[];
     for (var i = 0; i < outbounds.length; i += 5) {
-      final chunk = outbounds.sublist(i, i + 5 > outbounds.length ? outbounds.length : i + 5);
+      final chunk = outbounds.sublist(
+        i,
+        i + 5 > outbounds.length ? outbounds.length : i + 5,
+      );
       final cfgs = chunk.map((o) {
         final ob = Map<String, dynamic>.from(o)..['tag'] = 'proxy';
-        return {'xrayJson': jsonEncode({'outbounds': [ob]})};
+        return {
+          'xrayJson': jsonEncode({
+            'outbounds': [ob],
+          }),
+        };
       }).toList();
       try {
         final d = await _invoke('pingBatch', {
@@ -91,7 +114,9 @@ class Core {
   static Future<String?> shareLink(Map<String, dynamic> outbound) async {
     try {
       final d = await _invoke('convertXrayJsonToShareLinks', {
-        'xrayJson': jsonEncode({'outbounds': [outbound]})
+        'xrayJson': jsonEncode({
+          'outbounds': [outbound],
+        }),
       });
       final l = (d['links'] as String?)?.trim();
       return (l == null || l.isEmpty) ? null : l.split('\n').first;
@@ -105,7 +130,13 @@ class Core {
     if (!Platform.isAndroid) return [];
     final r = await _ch.invokeMethod<List>('apps');
     return (r ?? [])
-        .map((e) => AppInfo((e as Map)['pkg'] as String, e['name'] as String, e['system'] == true))
+        .map(
+          (e) => AppInfo(
+            (e as Map)['pkg'] as String,
+            e['name'] as String,
+            e['system'] == true,
+          ),
+        )
         .toList()
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
@@ -116,10 +147,16 @@ class Core {
       ..findProxy = ((_) => 'PROXY 127.0.0.1:$httpPort')
       ..connectionTimeout = const Duration(seconds: 6);
     try {
-      final rq = await c.getUrl(Uri.parse('https://ipwho.is/?fields=ip,country,country_code,city,connection'));
+      final rq = await c.getUrl(
+        Uri.parse(
+          'https://ipwho.is/?fields=ip,country,country_code,city,connection',
+        ),
+      );
       rq.headers.set('User-Agent', 'Netro');
       final rs = await rq.close().timeout(const Duration(seconds: 8));
-      final j = jsonDecode(await rs.transform(utf8.decoder).join()) as Map<String, dynamic>;
+      final j = jsonDecode(
+        await rs.transform(utf8.decoder).join(),
+      ) as Map<String, dynamic>;
       return j['ip'] == null ? null : j;
     } catch (_) {
       return null;
@@ -131,7 +168,11 @@ class Core {
   static Map<String, dynamic> _nativeExtra = {};
 
   /// Параметры для нативной части: DNS, раздельное туннелирование (Android).
-  static void setNativeOptions({required String dns, required String split, required List<String> apps}) {
+  static void setNativeOptions({
+    required String dns,
+    required String split,
+    required List<String> apps,
+  }) {
     _nativeExtra = {'dns': dns, 'split': split, 'apps': apps};
   }
 
@@ -140,7 +181,8 @@ class Core {
       _setWin(ConnState.connecting);
       try {
         await _invoke('runXray', {'xrayJson': jsonEncode(config)});
-        if (mode == ConnMode.proxy) await win.setSystemProxy('127.0.0.1:$httpPort');
+        if (mode == ConnMode.proxy)
+          await win.setSystemProxy('127.0.0.1:$httpPort');
         _winMode = mode;
         _setWin(ConnState.on);
       } catch (e) {
@@ -175,7 +217,8 @@ class Core {
   static Future<void> cleanupStaleProxy() async {
     if (!_isWin) return;
     try {
-      if (await win.ourProxyIsSet('127.0.0.1:$httpPort')) await win.clearSystemProxy();
+      if (await win.ourProxyIsSet('127.0.0.1:$httpPort'))
+        await win.clearSystemProxy();
     } catch (_) {}
   }
 
@@ -193,11 +236,16 @@ class Core {
   /// Берутся из встроенного сервера метрик Xray на 127.0.0.1:[metricsPort].
   static Future<List<int>?> trafficTotals() async {
     try {
-      final c = await HttpClientLite.get('http://127.0.0.1:$metricsPort/debug/vars');
+      final c = await HttpClientLite.get(
+        'http://127.0.0.1:$metricsPort/debug/vars',
+      );
       final j = jsonDecode(c) as Map<String, dynamic>;
       final p = (((j['stats'] as Map?)?['outbound'] as Map?)?['proxy'] as Map?);
       if (p == null) return null;
-      return [(p['downlink'] as num?)?.toInt() ?? 0, (p['uplink'] as num?)?.toInt() ?? 0];
+      return [
+        (p['downlink'] as num?)?.toInt() ?? 0,
+        (p['uplink'] as num?)?.toInt() ?? 0,
+      ];
     } catch (_) {
       return null;
     }

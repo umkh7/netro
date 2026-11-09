@@ -49,7 +49,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     // Автообновление подписок старше часа.
     for (final s in subs.where((s) => s.autoUpdate && !s.isManual)) {
-      if (s.updatedAt == null || DateTime.now().difference(s.updatedAt!).inMinutes > 60) {
+      if (s.updatedAt == null ||
+          DateTime.now().difference(s.updatedAt!).inMinutes > 60) {
         unawaited(refresh(s, silent: true));
       }
     }
@@ -143,7 +144,8 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
-  Subscription? get mainSub => subs.where((s) => !s.isManual).firstOrNull ?? subs.firstOrNull;
+  Subscription? get mainSub =>
+      subs.where((s) => !s.isManual).firstOrNull ?? subs.firstOrNull;
 
   Future<void> select(Server s) async {
     final wasOn = conn == ConnState.on || conn == ConnState.connecting;
@@ -213,7 +215,7 @@ class AppState extends ChangeNotifier {
 
   /// Добавление из текста: ссылка подписки или ключи.
   Future<Subscription> addFromText(String text) async {
-    final t = text.trim();
+    final t = normalizeInput(text);
     if (t.isEmpty) throw CoreError('Вставьте ссылку или ключ');
     if (isSubscriptionUrl(t)) {
       final exist = subs.where((s) => s.url == t).firstOrNull;
@@ -248,7 +250,13 @@ class AppState extends ChangeNotifier {
     final added = await parseServers(t, '$id-${newId()}');
     if (added.isEmpty) throw CoreError('Не удалось прочитать ключ');
     if (manual == null) {
-      manual = Subscription(id: id, title: '🔑 Мои ключи', url: null, servers: [], updatedAt: DateTime.now());
+      manual = Subscription(
+        id: id,
+        title: '🔑 Мои ключи',
+        url: null,
+        servers: [],
+        updatedAt: DateTime.now(),
+      );
       subs.add(manual);
     }
     manual.servers = [...manual.servers, ...added];
@@ -291,7 +299,8 @@ class AppState extends ChangeNotifier {
 
   Future<void> remove(Subscription s) async {
     subs.remove(s);
-    if (!allServers.any((x) => x.id == selectedId)) selectedId = allServers.firstOrNull?.id;
+    if (!allServers.any((x) => x.id == selectedId))
+      selectedId = allServers.firstOrNull?.id;
     if (viewSubId == s.id) viewSubId = null;
     await _save();
     notifyListeners();
@@ -314,8 +323,11 @@ class AppState extends ChangeNotifier {
     pinging = true;
     notifyListeners();
     try {
-      final d = await Core.ping(s.servers.map((e) => e.outbound).toList(),
-          url: settings.pingUrl, timeout: settings.pingTimeout);
+      final d = await Core.ping(
+        s.servers.map((e) => e.outbound).toList(),
+        url: settings.pingUrl,
+        timeout: settings.pingTimeout,
+      );
       for (var i = 0; i < s.servers.length && i < d.length; i++) {
         s.servers[i].ping = d[i];
       }
@@ -328,8 +340,9 @@ class AppState extends ChangeNotifier {
 
   /// Сервер с лучшим пингом в подписке (без ошибок).
   Server? bestOf(Subscription s) {
-    final ok = s.servers.where((x) => x.ping != null && x.ping! < 10000).toList()
-      ..sort((a, b) => a.ping!.compareTo(b.ping!));
+    final ok =
+        s.servers.where((x) => x.ping != null && x.ping! < 10000).toList()
+          ..sort((a, b) => a.ping!.compareTo(b.ping!));
     return ok.firstOrNull;
   }
 
@@ -337,7 +350,9 @@ class AppState extends ChangeNotifier {
     if (conn == ConnState.off) await pingSub(s);
     final b = bestOf(s);
     if (b == null) {
-      lastError = conn == ConnState.off ? 'Ни один сервер не ответил' : 'Отключите VPN, чтобы проверить пинг';
+      lastError = conn == ConnState.off
+          ? 'Ни один сервер не ответил'
+          : 'Отключите VPN, чтобы проверить пинг';
       notifyListeners();
       return;
     }

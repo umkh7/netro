@@ -8,6 +8,7 @@ import 'config_builder.dart';
 import 'core.dart';
 import 'country.dart';
 import 'models.dart';
+import 'protocols.dart';
 
 const appVersion = '1.1.0';
 
@@ -15,10 +16,10 @@ String get userAgent {
   final os = Platform.isAndroid
       ? 'Android'
       : Platform.isIOS
-          ? 'iOS'
-          : Platform.isWindows
-              ? 'Windows'
-              : Platform.operatingSystem;
+      ? 'iOS'
+      : Platform.isWindows
+      ? 'Windows'
+      : Platform.operatingSystem;
   return 'Netro/$appVersion ($os)';
 }
 
@@ -30,8 +31,15 @@ class SubFetchResult {
   final int? total;
   final String? supportUrl;
   final String? webPageUrl;
-  SubFetchResult(this.title, this.servers, this.expire, this.used, this.total, this.supportUrl,
-      this.webPageUrl);
+  SubFetchResult(
+    this.title,
+    this.servers,
+    this.expire,
+    this.used,
+    this.total,
+    this.supportUrl,
+    this.webPageUrl,
+  );
 }
 
 String _newId() => DateTime.now().microsecondsSinceEpoch.toRadixString(36);
@@ -48,7 +56,9 @@ String _maybeBase64(String body) {
       s += '=';
     }
     final out = utf8.decode(base64.decode(s), allowMalformed: true);
-    if (out.contains('://') || out.trim().startsWith('{') || out.trim().startsWith('[')) {
+    if (out.contains('://') ||
+        out.trim().startsWith('{') ||
+        out.trim().startsWith('[')) {
       return out.trim();
     }
   } catch (_) {}
@@ -59,7 +69,9 @@ String _decodeHeaderText(String? v) {
   if (v == null || v.isEmpty) return '';
   if (v.startsWith('base64:')) {
     try {
-      return utf8.decode(base64.decode(v.substring(7).trim()), allowMalformed: true).trim();
+      return utf8
+          .decode(base64.decode(v.substring(7).trim()), allowMalformed: true)
+          .trim();
     } catch (_) {
       return '';
     }
@@ -102,7 +114,10 @@ String _legacyVmessToAead(String line) {
     if (net == 'tcp' && s('type') == 'http') q['headerType'] = 'http';
     final host = s('add').contains(':') ? '[${s('add')}]' : s('add');
     final query = q.entries
-        .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value).replaceAll('+', '%20')}')
+        .map(
+          (e) =>
+              '${e.key}=${Uri.encodeQueryComponent(e.value).replaceAll('+', '%20')}',
+        )
         .join('&');
     return 'vmess://${s('id')}@$host:${s('port')}?$query#${Uri.encodeComponent(s('ps'))}';
   } catch (_) {
@@ -127,43 +142,104 @@ String _normalizeLinks(String text) {
 }
 
 Future<List<Server>> parseServers(String text, String idPrefix) async {
-  final norm = _normalizeLinks(_maybeBase64(text));
-  final obs = await Core.convertLinks(norm);
+  final prep = prepare(_maybeBase64(text));
+  final obs = <Map<String, dynamic>>[];
+  final norm = _normalizeLinks(prep.links);
+  if (norm.trim().isNotEmpty) {
+    try {
+      obs.addAll(await Core.convertLinks(norm));
+    } catch (e) {
+      if (prep.outbounds.isEmpty) rethrow;
+    }
+  }
+  obs.addAll(prep.outbounds);
   final res = <Server>[];
   for (var i = 0; i < obs.length; i++) {
     final ob = obs[i];
     final tag = (ob['tag'] as String?)?.trim() ?? '';
     final g = guessCountry(tag.isEmpty ? 'Сервер ${i + 1}' : tag);
-    res.add(Server(
-      id: '$idPrefix-$i-${g.cleanName.hashCode.toRadixString(36)}',
-      name: g.cleanName,
-      country: g.code,
-      protocol: protocolLabel(ob),
-      outbound: ob,
-    ));
+    res.add(
+      Server(
+        id: '$idPrefix-$i-${g.cleanName.hashCode.toRadixString(36)}',
+        name: g.cleanName,
+        country: g.code,
+        protocol: protocolLabel(ob),
+        outbound: ob,
+        emoji: g.emoji,
+      ),
+    );
   }
   return res;
+}
+
+/// Приводит то, что вставил человек, к ссылке подписки или ключам:
+/// happ://add/…, netro://add?url=…, ссылка без https://, ссылка внутри текста.
+String normalizeInput(String raw) {
+  var t = raw.trim();
+  for (final p in [
+    'happ://add/',
+    'netro://add/',
+    'v2raytun://import/',
+    'hiddify://import/',
+  ]) {
+    if (t.toLowerCase().startsWith(p))
+      return Uri.decodeComponent(t.substring(p.length)).trim();
+  }
+  if (t.toLowerCase().startsWith('netro://add?')) {
+    final u = Uri.tryParse(t)?.queryParameters['url'];
+    if (u != null && u.isNotEmpty) return u.trim();
+  }
+  // Ключи и JSON/YAML — как есть
+  if (RegExp(
+        r'^(vless|vmess|trojan|ss|ssr|socks5?|hysteria2?|hy2|wireguard|wg|tuic)://',
+        caseSensitive: false,
+      ).hasMatch(t) ||
+      t.startsWith('{') ||
+      t.startsWith('[') ||
+      t.contains('proxies:') ||
+      t.contains('[Interface]')) {
+    return t;
+  }
+  // Ссылка внутри текста
+  final m = RegExp(r'https?://[^\s"<>]+', caseSensitive: false).firstMatch(t);
+  if (m != null) return m.group(0)!.replaceAll(RegExp(r'[).,;]+$'), '');
+  // Домен без https://
+  if (!t.contains(' ') &&
+      !t.contains('\n') &&
+      RegExp(
+        r'^[a-z0-9.-]+\.[a-z]{2,}(/|$)',
+        caseSensitive: false,
+      ).hasMatch(t)) {
+    return 'https://$t';
+  }
+  return t;
 }
 
 /// Загрузка подписки. Ключи и содержимое ссылки никуда не отправляются.
 Future<SubFetchResult> fetchSubscription(String url, String idPrefix) async {
   final uri = Uri.tryParse(url.trim());
-  if (uri == null || uri.host.isEmpty) throw CoreError('Это не похоже на ссылку подписки');
+  if (uri == null || uri.host.isEmpty)
+    throw CoreError('Это не похоже на ссылку подписки');
   http.Response r;
   try {
-    r = await http.get(uri, headers: {
-      'User-Agent': userAgent,
-      'Accept': '*/*',
-    }).timeout(const Duration(seconds: 20));
+    r = await http
+        .get(uri, headers: {'User-Agent': userAgent, 'Accept': '*/*'})
+        .timeout(const Duration(seconds: 20));
   } on TimeoutException {
-    throw CoreError('Сервер подписки не отвечает. Проверьте интернет и попробуйте ещё раз');
+    throw CoreError(
+      'Сервер подписки не отвечает. Проверьте интернет и попробуйте ещё раз',
+    );
   } on SocketException {
     throw CoreError('Нет связи с ${uri.host}. Проверьте интернет или ссылку');
   } on HandshakeException {
-    throw CoreError('Не удалось установить защищённое соединение с ${uri.host}');
+    throw CoreError(
+      'Не удалось установить защищённое соединение с ${uri.host}',
+    );
   }
   if (r.statusCode == 404) {
-    throw CoreError('Подписка не найдена. Проверьте ссылку — возможно, в ней опечатка');
+    throw CoreError(
+      'Подписка не найдена. Проверьте ссылку — возможно, в ней опечатка',
+    );
   }
   if (r.statusCode == 401 || r.statusCode == 403) {
     throw CoreError('Подписка отключена или истекла (${r.statusCode})');
@@ -181,7 +257,10 @@ Future<SubFetchResult> fetchSubscription(String url, String idPrefix) async {
   var title = _decodeHeaderText(r.headers['profile-title']);
   if (title.isEmpty) {
     final cd = r.headers['content-disposition'] ?? '';
-    final m = RegExp(r'filename\*?=(?:UTF-8'')?"?([^";]+)"?').firstMatch(cd);
+    final m = RegExp(
+      r'filename\*?=(?:UTF-8'
+      ')?"?([^";]+)"?',
+    ).firstMatch(cd);
     if (m != null) title = _decodeHeaderText(m.group(1));
   }
   if (title.isEmpty) title = Uri.parse(url).host;
@@ -206,7 +285,9 @@ Future<SubFetchResult> fetchSubscription(String url, String idPrefix) async {
     expire,
     used,
     total,
-    _decodeHeaderText(r.headers['support-url']).isEmpty ? null : _decodeHeaderText(r.headers['support-url']),
+    _decodeHeaderText(r.headers['support-url']).isEmpty
+        ? null
+        : _decodeHeaderText(r.headers['support-url']),
     _decodeHeaderText(r.headers['profile-web-page-url']).isEmpty
         ? null
         : _decodeHeaderText(r.headers['profile-web-page-url']),
@@ -216,7 +297,8 @@ Future<SubFetchResult> fetchSubscription(String url, String idPrefix) async {
 /// Что ввёл человек: ссылка подписки (http/https) или ключи.
 bool isSubscriptionUrl(String s) {
   final t = s.trim().toLowerCase();
-  return (t.startsWith('https://') || t.startsWith('http://')) && !t.contains('\n');
+  return (t.startsWith('https://') || t.startsWith('http://')) &&
+      !t.contains('\n');
 }
 
 String newId() => _newId();

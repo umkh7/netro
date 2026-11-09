@@ -91,8 +91,18 @@ String plural(int n, String one, String few, String many) {
 }
 
 const _months = [
-  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+  'января',
+  'февраля',
+  'марта',
+  'апреля',
+  'мая',
+  'июня',
+  'июля',
+  'августа',
+  'сентября',
+  'октября',
+  'ноября',
+  'декабря',
 ];
 
 String dateText(DateTime d) => '${d.day} ${_months[d.month - 1]}';
@@ -106,11 +116,13 @@ String daysLeftText(DateTime? expire) {
   return 'Осталось $days ${plural(days, 'день', 'дня', 'дней')} · до ${dateText(expire)}';
 }
 
-/// Флаг страны в кружке; без страны — значок глобуса.
+/// Флаг страны в кружке. ЕС рисуется отдельно (библиотека не знает код «EU»),
+/// неизвестный флаг — эмодзи из названия, совсем без флага — глобус.
 class Flag extends StatelessWidget {
   final String code;
   final double size;
-  const Flag(this.code, {super.key, this.size = 28});
+  final String emoji;
+  const Flag(this.code, {super.key, this.size = 28, this.emoji = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -118,22 +130,40 @@ class Flag extends StatelessWidget {
       shape: BoxShape.circle,
       border: Border.all(color: const Color(0x1FFFFFFF)),
     );
-    if (code.length != 2) {
+    final c = code.toLowerCase();
+    Widget? img;
+    final theme = ImageTheme(width: size, height: size, shape: const Circle());
+    if (c == 'eu') {
+      img = CountryFlag.fromCurrencyCode('EUR', theme: theme);
+    } else if (c.length == 2 && FlagCode.fromCountryCode(c) != null) {
+      img = CountryFlag.fromCountryCode(c, theme: theme);
+    }
+    if (img != null) {
       return Container(
         width: size,
         height: size,
-        decoration: ring.copyWith(color: const Color(0xFF2C2C2E)),
-        child: Icon(Icons.public, size: size * 0.6, color: const Color(0xFFC7C7CC)),
+        foregroundDecoration: ring,
+        child: img,
       );
     }
     return Container(
       width: size,
       height: size,
-      foregroundDecoration: ring,
-      child: CountryFlag.fromCountryCode(
-        code,
-        theme: ImageTheme(width: size, height: size, shape: const Circle()),
+      alignment: Alignment.center,
+      decoration: ring.copyWith(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2C3550), Color(0xFF1A1F2E)],
+        ),
       ),
+      child: emoji.isNotEmpty
+          ? Text(emoji, style: TextStyle(fontSize: size * 0.55, height: 1))
+          : Icon(
+              Icons.public_rounded,
+              size: size * 0.6,
+              color: const Color(0xFF9DB4FF),
+            ),
     );
   }
 }
@@ -142,7 +172,12 @@ class NCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
-  const NCard({super.key, required this.child, this.padding = EdgeInsets.zero, this.onTap});
+  const NCard({
+    super.key,
+    required this.child,
+    this.padding = EdgeInsets.zero,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +185,10 @@ class NCard extends StatelessWidget {
       color: C.card,
       borderRadius: BorderRadius.circular(14),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(onTap: onTap, child: Padding(padding: padding, child: child)),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(padding: padding, child: child),
+      ),
     );
   }
 }
@@ -171,10 +209,14 @@ class SectionLabel extends StatelessWidget {
     const st = TextStyle(fontSize: 13, color: C.gray);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-      child: Row(children: [
-        Expanded(child: Text(left, style: st, overflow: TextOverflow.ellipsis)),
-        if (right != null) Text(right!, style: st),
-      ]),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(left, style: st, overflow: TextOverflow.ellipsis),
+          ),
+          if (right != null) Text(right!, style: st),
+        ],
+      ),
     );
   }
 }
@@ -183,19 +225,32 @@ class LargeTitle extends StatelessWidget {
   final String text;
   final List<Widget> actions;
   final Widget? leading;
-  const LargeTitle(this.text, {super.key, this.actions = const [], this.leading});
+  const LargeTitle(
+    this.text, {
+    super.key,
+    this.actions = const [],
+    this.leading,
+  });
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 48,
-      child: Row(children: [
-        if (leading != null) ...[leading!, const SizedBox(width: 10)],
-        Expanded(
-          child: Text(text,
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -0.6)),
-        ),
-        ...actions,
-      ]),
+      child: Row(
+        children: [
+          if (leading != null) ...[leading!, const SizedBox(width: 10)],
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.6,
+              ),
+            ),
+          ),
+          ...actions,
+        ],
+      ),
     );
   }
 }
@@ -207,10 +262,10 @@ class IconAction extends StatelessWidget {
   const IconAction(this.icon, this.tooltip, this.onTap, {super.key});
   @override
   Widget build(BuildContext context) => IconButton(
-        onPressed: onTap,
-        tooltip: tooltip,
-        icon: Icon(icon, color: C.accent, size: 26),
-      );
+    onPressed: onTap,
+    tooltip: tooltip,
+    icon: Icon(icon, color: C.accent, size: 26),
+  );
 }
 
 /// Сегментированный переключатель в стиле iOS.
@@ -218,13 +273,21 @@ class Segmented<T> extends StatelessWidget {
   final Map<T, String> items;
   final T value;
   final ValueChanged<T> onChanged;
-  const Segmented({super.key, required this.items, required this.value, required this.onChanged});
+  const Segmented({
+    super.key,
+    required this.items,
+    required this.value,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(color: C.field, borderRadius: BorderRadius.circular(9)),
+      decoration: BoxDecoration(
+        color: C.field,
+        borderRadius: BorderRadius.circular(9),
+      ),
       child: Row(
         children: items.entries.map((e) {
           final on = e.key == value;
@@ -240,9 +303,13 @@ class Segmented<T> extends StatelessWidget {
                   color: on ? C.segOn : Colors.transparent,
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: Text(e.value,
-                    style: TextStyle(
-                        fontSize: 13, fontWeight: on ? FontWeight.w600 : FontWeight.w500)),
+                child: Text(
+                  e.value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: on ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
               ),
             ),
           );
@@ -256,8 +323,11 @@ class Hairline extends StatelessWidget {
   final double indent;
   const Hairline({super.key, this.indent = 0});
   @override
-  Widget build(BuildContext context) =>
-      Container(margin: EdgeInsets.only(left: indent), height: 1, color: C.line);
+  Widget build(BuildContext context) => Container(
+    margin: EdgeInsets.only(left: indent),
+    height: 1,
+    color: C.line,
+  );
 }
 
 class Btn extends StatelessWidget {
@@ -265,7 +335,13 @@ class Btn extends StatelessWidget {
   final VoidCallback? onTap;
   final bool primary;
   final bool busy;
-  const Btn(this.text, {super.key, this.onTap, this.primary = false, this.busy = false});
+  const Btn(
+    this.text, {
+    super.key,
+    this.onTap,
+    this.primary = false,
+    this.busy = false,
+  });
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -275,13 +351,23 @@ class Btn extends StatelessWidget {
         style: FilledButton.styleFrom(
           backgroundColor: primary ? C.accent : C.field,
           foregroundColor: primary ? Colors.white : C.accent,
-          disabledBackgroundColor: primary ? C.accent.withValues(alpha: 0.5) : C.field,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          disabledBackgroundColor: primary
+              ? C.accent.withValues(alpha: 0.5)
+              : C.field,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         child: busy
             ? const SizedBox(
-                width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
             : Text(text),
       ),
     );
@@ -300,7 +386,12 @@ class SubAvatar extends StatelessWidget {
     final isEmoji = first.runes.any((r) => r > 0x2000);
     final label = isEmoji
         ? first
-        : t.replaceAll(RegExp(r'[^A-Za-zА-Яа-я0-9]'), '').characters.take(2).toString().toUpperCase();
+        : t
+              .replaceAll(RegExp(r'[^A-Za-zА-Яа-я0-9]'), '')
+              .characters
+              .take(2)
+              .toString()
+              .toUpperCase();
     return Container(
       width: size,
       height: size,
@@ -309,11 +400,14 @@ class SubAvatar extends StatelessWidget {
         color: isEmoji ? const Color(0xFF2C2C2E) : C.accent,
         borderRadius: BorderRadius.circular(size * 0.26),
       ),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: isEmoji ? size * 0.5 : size * 0.36,
-              fontWeight: FontWeight.w700,
-              color: Colors.white)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: isEmoji ? size * 0.5 : size * 0.36,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 }
@@ -323,7 +417,8 @@ String titleWithoutEmoji(String t) {
   final s = t.trim();
   if (s.isEmpty) return s;
   final first = s.characters.first;
-  if (first.runes.any((r) => r > 0x2000)) return s.characters.skip(1).toString().trim();
+  if (first.runes.any((r) => r > 0x2000))
+    return s.characters.skip(1).toString().trim();
   return s;
 }
 
@@ -331,20 +426,27 @@ String titleWithoutEmoji(String t) {
 
 /// Плавный переход на новый экран (iOS-свайп назад работает).
 Route<T> smoothRoute<T>(Widget page) => PageRouteBuilder<T>(
-      transitionDuration: const Duration(milliseconds: 320),
-      reverseTransitionDuration: const Duration(milliseconds: 260),
-      pageBuilder: (_, __, ___) => page,
-      transitionsBuilder: (_, a, __, child) {
-        final c = CurvedAnimation(parent: a, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic);
-        return FadeTransition(
-          opacity: c,
-          child: SlideTransition(
-            position: Tween(begin: const Offset(0.06, 0), end: Offset.zero).animate(c),
-            child: child,
-          ),
-        );
-      },
+  transitionDuration: const Duration(milliseconds: 320),
+  reverseTransitionDuration: const Duration(milliseconds: 260),
+  pageBuilder: (_, __, ___) => page,
+  transitionsBuilder: (_, a, __, child) {
+    final c = CurvedAnimation(
+      parent: a,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
     );
+    return FadeTransition(
+      opacity: c,
+      child: SlideTransition(
+        position: Tween(
+          begin: const Offset(0.06, 0),
+          end: Offset.zero,
+        ).animate(c),
+        child: child,
+      ),
+    );
+  },
+);
 
 /// Кнопка, которая мягко «проседает» при нажатии.
 class Pressable extends StatefulWidget {
@@ -352,7 +454,13 @@ class Pressable extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final double scale;
-  const Pressable({super.key, required this.child, this.onTap, this.onLongPress, this.scale = 0.97});
+  const Pressable({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.onLongPress,
+    this.scale = 0.97,
+  });
   @override
   State<Pressable> createState() => _PressableState();
 }
@@ -431,19 +539,28 @@ class Group extends StatelessWidget {
       rows.add(children[i]);
       if (i < children.length - 1) rows.add(const Hairline(indent: 56));
     }
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      if (header != null) SectionLabel(header!),
-      ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Container(color: C.card, child: Column(children: rows)),
-      ),
-      if (footer != null)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Text(footer!, style: const TextStyle(fontSize: 13, height: 1.4, color: C.gray)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (header != null) SectionLabel(header!),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            color: C.card,
+            child: Column(children: rows),
+          ),
         ),
-      const SizedBox(height: 8),
-    ]);
+        if (footer != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              footer!,
+              style: const TextStyle(fontSize: 13, height: 1.4, color: C.gray),
+            ),
+          ),
+        const SizedBox(height: 8),
+      ],
+    );
   }
 }
 
@@ -453,11 +570,14 @@ class RowIcon extends StatelessWidget {
   const RowIcon(this.icon, this.color, {super.key});
   @override
   Widget build(BuildContext context) => Container(
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, size: 18, color: Colors.white),
-      );
+    width: 30,
+    height: 30,
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Icon(icon, size: 18, color: Colors.white),
+  );
 }
 
 class NavRow extends StatelessWidget {
@@ -469,16 +589,17 @@ class NavRow extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? titleColor;
   final bool chevron;
-  const NavRow(
-      {super.key,
-      this.leading,
-      required this.title,
-      this.subtitle,
-      this.value,
-      this.trailing,
-      this.onTap,
-      this.titleColor,
-      this.chevron = true});
+  const NavRow({
+    super.key,
+    this.leading,
+    required this.title,
+    this.subtitle,
+    this.value,
+    this.trailing,
+    this.onTap,
+    this.titleColor,
+    this.chevron = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -495,25 +616,48 @@ class NavRow extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 52),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Row(children: [
-              if (leading != null) ...[leading!, const SizedBox(width: 12)],
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                  Text(title, style: TextStyle(fontSize: 16, color: titleColor ?? C.text)),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(subtitle!, style: const TextStyle(fontSize: 12.5, color: C.gray, height: 1.3)),
-                  ],
-                ]),
-              ),
-              if (value != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Text(value!, style: const TextStyle(fontSize: 15, color: C.gray)),
+            child: Row(
+              children: [
+                if (leading != null) ...[leading!, const SizedBox(width: 12)],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: titleColor ?? C.text,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: C.gray,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              if (trailing != null) trailing!,
-              if (trailing == null && onTap != null && chevron) const Chevron(),
-            ]),
+                if (value != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Text(
+                      value!,
+                      style: const TextStyle(fontSize: 15, color: C.gray),
+                    ),
+                  ),
+                if (trailing != null) trailing!,
+                if (trailing == null && onTap != null && chevron)
+                  const Chevron(),
+              ],
+            ),
           ),
         ),
       ),
@@ -527,34 +671,43 @@ class SwitchRow extends StatelessWidget {
   final String? subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
-  const SwitchRow(
-      {super.key, this.leading, required this.title, this.subtitle, required this.value, required this.onChanged});
+  const SwitchRow({
+    super.key,
+    this.leading,
+    required this.title,
+    this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
   @override
   Widget build(BuildContext context) => NavRow(
-        leading: leading,
-        title: title,
-        subtitle: subtitle,
-        onTap: () => onChanged(!value),
-        trailing: Switch.adaptive(
-          value: value,
-          onChanged: onChanged,
-          activeTrackColor: C.green,
-          activeThumbColor: Colors.white,
-          inactiveTrackColor: const Color(0xFF39393D),
-          inactiveThumbColor: Colors.white,
-          trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
-        ),
-      );
+    leading: leading,
+    title: title,
+    subtitle: subtitle,
+    onTap: () => onChanged(!value),
+    trailing: Switch.adaptive(
+      value: value,
+      onChanged: onChanged,
+      activeTrackColor: C.green,
+      activeThumbColor: Colors.white,
+      inactiveTrackColor: const Color(0xFF39393D),
+      inactiveThumbColor: Colors.white,
+      trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+    ),
+  );
 }
 
 /// Нижняя выезжающая панель в стиле приложения.
-Future<T?> showSheet<T>(BuildContext context, Widget child) => showModalBottomSheet<T>(
+Future<T?> showSheet<T>(BuildContext context, Widget child) =>
+    showModalBottomSheet<T>(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF111113),
       showDragHandle: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
       builder: (_) => child,
     );
 

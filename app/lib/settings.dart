@@ -9,11 +9,17 @@ class DnsOption {
 const dnsOptions = [
   DnsOption('cloudflare', 'Cloudflare', '1.1.1.1 · быстрый', '1.1.1.1'),
   DnsOption('google', 'Google', '8.8.8.8', '8.8.8.8'),
-  DnsOption('adguard', 'AdGuard', '94.140.14.14 · без рекламы и трекеров', '94.140.14.14'),
+  DnsOption(
+    'adguard',
+    'AdGuard',
+    '94.140.14.14 · без рекламы и трекеров',
+    '94.140.14.14',
+  ),
   DnsOption('quad9', 'Quad9', '9.9.9.9 · блок вредоносных сайтов', '9.9.9.9'),
 ];
 
-DnsOption dnsById(String id) => dnsOptions.firstWhere((d) => d.id == id, orElse: () => dnsOptions.first);
+DnsOption dnsById(String id) =>
+    dnsOptions.firstWhere((d) => d.id == id, orElse: () => dnsOptions.first);
 
 enum SortMode { list, ping, name }
 
@@ -33,17 +39,17 @@ class Settings {
   bool autoBest = false; // перед подключением выбирать сервер с лучшим пингом
 
   Map<String, dynamic> toJson() => {
-        'autoConnect': autoConnect,
-        'lanDirect': lanDirect,
-        'ruDirect': ruDirect,
-        'dns': dns,
-        'pingUrl': pingUrl,
-        'pingTimeout': pingTimeout,
-        'sort': sort.name,
-        'split': split.name,
-        'splitApps': splitApps,
-        'autoBest': autoBest,
-      };
+    'autoConnect': autoConnect,
+    'lanDirect': lanDirect,
+    'ruDirect': ruDirect,
+    'dns': dns,
+    'pingUrl': pingUrl,
+    'pingTimeout': pingTimeout,
+    'sort': sort.name,
+    'split': split.name,
+    'splitApps': splitApps,
+    'autoBest': autoBest,
+  };
 
   static Settings fromJson(String? raw) {
     final s = Settings();
@@ -56,8 +62,14 @@ class Settings {
       s.dns = j['dns'] as String? ?? s.dns;
       s.pingUrl = j['pingUrl'] as String? ?? s.pingUrl;
       s.pingTimeout = j['pingTimeout'] as int? ?? s.pingTimeout;
-      s.sort = SortMode.values.firstWhere((e) => e.name == j['sort'], orElse: () => SortMode.list);
-      s.split = SplitMode.values.firstWhere((e) => e.name == j['split'], orElse: () => SplitMode.off);
+      s.sort = SortMode.values.firstWhere(
+        (e) => e.name == j['sort'],
+        orElse: () => SortMode.list,
+      );
+      s.split = SplitMode.values.firstWhere(
+        (e) => e.name == j['split'],
+        orElse: () => SplitMode.off,
+      );
       s.splitApps = ((j['splitApps'] as List?) ?? []).cast<String>();
       s.autoBest = j['autoBest'] as bool? ?? s.autoBest;
     } catch (_) {}
