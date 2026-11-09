@@ -1,0 +1,72 @@
+name: iOS
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', 'scripts/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Ядро Xray для iOS (LibXray.xcframework)
+        id: core
+        run: |
+          set -o pipefail
+          mkdir -p out
+          git clone --depth 1 https://github.com/XTLS/libXray .deps/libXray
+          cd .deps/libXray
+          python3 build/main.py apple gomobile 2>&1 | tee ../../out/build-ios-core.log
+          mkdir -p ../../app/ios/Frameworks
+          rm -rf ../../app/ios/Frameworks/LibXray.xcframework
+          cp -R LibXray.xcframework ../../app/ios/Frameworks/
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Сборка Netro.app (без подписи)
+        id: build
+        working-directory: app
+        run: |
+          set -o pipefail
+          flutter build ios --release --no-codesign 2>&1 | tee ../out/build-ios.log
+
+      - name: Упаковка .ipa
+        id: ipa
+        if: steps.build.outcome == 'success'
+        run: |
+          VER=$(grep '^version:' app/pubspec.yaml | sed 's/version: //; s/+.*//')
+          rm -rf Payload && mkdir Payload
+          cp -R app/build/ios/iphoneos/Runner.app Payload/Netro.app
+          ls Payload/Netro.app/PlugIns | tee -a out/build-ios.log
+          zip -qry "out/Netro-$VER-ios-unsigned.ipa" Payload
+          ls -la out
+
+      - name: Выгрузка в ветку builds-ios
+        if: always()
+        run: |
+          cd out
+          echo "commit: $GITHUB_SHA" > BUILD_INFO.txt
+          echo "core: ${{ steps.core.outcome }} build: ${{ steps.build.outcome }} ipa: ${{ steps.ipa.outcome }}" >> BUILD_INFO.txt
+          date -u >> BUILD_INFO.txt
+          git init -q -b builds-ios
+          git config user.name "netro-ci"
+          git config user.email "ci@netro.local"
+          git add -A
+          git commit -q -m "iOS build $GITHUB_SHA"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" builds-ios

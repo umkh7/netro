@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -142,7 +143,9 @@ class AppState extends ChangeNotifier {
     connectedAt = null;
     notifyListeners();
     try {
-      await Core.start(buildXrayConfig(s, mode), mode);
+      // На iOS есть только туннель (NetworkExtension).
+      final m = Platform.isIOS ? ConnMode.tun : mode;
+      await Core.start(buildXrayConfig(s, m), m);
     } catch (e) {
       conn = ConnState.off;
       lastError = 'Не удалось подключиться: $e';

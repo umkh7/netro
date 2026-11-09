@@ -66,5 +66,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Камера нужна, чтобы отсканировать QR-код подписки.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>pro.netro.netro</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>netro</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

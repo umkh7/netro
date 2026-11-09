@@ -1,0 +1,2 @@
+// Только версия приложения из pubspec (FLUTTER_BUILD_NAME / FLUTTER_BUILD_NUMBER), без Pods.
+#include "../Flutter/Generated.xcconfig"

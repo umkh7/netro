@@ -107,7 +107,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontSize: 13, color: C.gray, fontFeatures: [FontFeature.tabularFigures()])),
           ]),
         ),
-        Segmented<ConnMode>(
+        if (!Platform.isIOS)
+          Segmented<ConnMode>(
           items: {ConnMode.tun: 'Туннель (VPN)', ConnMode.proxy: Platform.isWindows ? 'Системный прокси' : 'Только прокси'},
           value: st.mode,
           onChanged: st.setMode,
