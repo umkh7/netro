@@ -203,27 +203,52 @@ class _ShellState extends State<Shell> {
   }
 }
 
-/// Плавная смена вкладок: активная проявляется с лёгким сдвигом, остальные гаснут.
-/// Состояние вкладок (прокрутка, поиск) сохраняется.
-class _FadeTab extends StatelessWidget {
+/// Вкладки: неактивные полностью скрыты (Offstage) — состояние сохраняется,
+/// но они не рисуются поверх. Активная плавно проявляется.
+class _FadeTab extends StatefulWidget {
   final bool active;
   final Widget child;
   const _FadeTab({required this.active, required this.child});
   @override
+  State<_FadeTab> createState() => _FadeTabState();
+}
+
+class _FadeTabState extends State<_FadeTab>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 240),
+    value: widget.active ? 1 : 0,
+  );
+
+  @override
+  void didUpdateWidget(_FadeTab old) {
+    super.didUpdateWidget(old);
+    if (widget.active && !old.active) _c.forward(from: 0);
+    if (!widget.active) _c.value = 0;
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      ignoring: !active,
+    final a = CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
+    return Offstage(
+      offstage: !widget.active,
       child: TickerMode(
-        enabled: active,
-        child: AnimatedOpacity(
-          opacity: active ? 1 : 0,
-          duration: Duration(milliseconds: active ? 260 : 140),
-          curve: Curves.easeOut,
-          child: AnimatedSlide(
-            offset: active ? Offset.zero : const Offset(0, 0.015),
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            child: child,
+        enabled: widget.active,
+        child: FadeTransition(
+          opacity: a,
+          child: SlideTransition(
+            position: Tween(
+              begin: const Offset(0, 0.012),
+              end: Offset.zero,
+            ).animate(a),
+            child: widget.child,
           ),
         ),
       ),

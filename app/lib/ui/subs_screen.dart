@@ -103,7 +103,8 @@ class _SubCard extends StatelessWidget {
               ? '${bytesText(sub.usedBytes!)} · без лимита'
               : 'без лимита');
     double? progress;
-    if (sub.expire != null) {
+    if (sub.expire != null &&
+        sub.expire!.difference(DateTime.now()).inDays <= 3650) {
       progress = (sub.expire!.difference(DateTime.now()).inHours / 24 / 30)
           .clamp(0.0, 1.0);
     }

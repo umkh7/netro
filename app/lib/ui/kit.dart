@@ -108,8 +108,9 @@ const _months = [
 String dateText(DateTime d) => '${d.day} ${_months[d.month - 1]}';
 
 String daysLeftText(DateTime? expire) {
-  if (expire == null) return 'Без срока';
+  if (expire == null) return 'Бессрочно';
   final left = expire.difference(DateTime.now());
+  if (left.inDays > 3650) return 'Бессрочно';
   if (left.isNegative) return 'Истекла ${dateText(expire)}';
   final days = left.inHours ~/ 24;
   if (days == 0) return 'Истекает сегодня';

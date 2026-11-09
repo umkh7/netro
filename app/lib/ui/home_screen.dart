@@ -425,7 +425,8 @@ class _SubSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double? progress;
-    if (sub.expire != null) {
+    if (sub.expire != null &&
+        sub.expire!.difference(DateTime.now()).inDays <= 3650) {
       final left = sub.expire!.difference(DateTime.now()).inHours / 24;
       progress = (left / 30).clamp(0.0, 1.0);
     }

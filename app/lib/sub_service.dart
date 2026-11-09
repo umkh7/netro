@@ -10,7 +10,7 @@ import 'country.dart';
 import 'models.dart';
 import 'protocols.dart';
 
-const appVersion = '1.1.0';
+const appVersion = '1.1.1';
 
 String get userAgent {
   final os = Platform.isAndroid
