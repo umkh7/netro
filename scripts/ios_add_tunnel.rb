@@ -42,6 +42,9 @@ app.build_configurations.each do |c|
   c.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'Runner/Runner.entitlements'
   c.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = DEPLOY
   c.build_settings['FRAMEWORK_SEARCH_PATHS'] = ['$(inherited)', '$(PROJECT_DIR)/Frameworks']
+  ld = Array(c.build_settings['OTHER_LDFLAGS'] || ['$(inherited)'])
+  ld << '-lresolv' unless ld.include?('-lresolv')
+  c.build_settings['OTHER_LDFLAGS'] = ld
 end
 
 # --- расширение NetroTunnel ---
