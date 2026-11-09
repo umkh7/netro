@@ -1,9 +1,10 @@
 name: iOS
 
+# Только iOS. Запуск: изменения в app/ios/** или вручную (Actions → iOS → Run workflow).
 on:
   push:
     branches: [main]
-    paths: ['app/**', 'scripts/**', '.github/workflows/ios.yml']
+    paths: ['app/ios/**', '.github/workflows/ios.yml']
   workflow_dispatch:
 
 permissions:
@@ -13,60 +14,126 @@ concurrency:
   group: ios-build
   cancel-in-progress: true
 
+env:
+  # Версия ядра: libXray (MIT) на коммите от 2026-11-09, внутри Xray-core 26.11.9.
+  LIBXRAY_SHA: 5a0f7d8d1c28b34afb5727b04b26a10f6dbac7e3
+  CORE_TAG: core-ios-5a0f7d8
+
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Старт
+        run: mkdir -p out && echo "$(date -u +%T) старт" > out/TIMING.txt
+
       - uses: actions/checkout@v4
 
+      - name: Xcode 16.4
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app
+          xcodebuild -version | head -1 | tee -a out/TIMING.txt
+
+      # --- Ядро: скачать готовое из Release; собрать только если его ещё нет ---
+      - name: Ядро Xray — скачать готовое
+        id: core_dl
+        continue-on-error: true
+        run: |
+          mkdir -p .core && cd .core
+          gh release download "$CORE_TAG" -R "$GITHUB_REPOSITORY" -p LibXray.xcframework.zip
+          echo "$(date -u +%T) ядро скачано из Release" >> ../out/TIMING.txt
+
       - uses: actions/setup-go@v5
+        if: steps.core_dl.outcome != 'success'
         with:
           go-version: '1.26'
+          cache: false
 
-      - name: Ядро Xray для iOS (LibXray.xcframework)
-        id: core
+      - name: Ядро Xray — собрать один раз и сохранить в Release
+        if: steps.core_dl.outcome != 'success'
         run: |
           set -o pipefail
-          mkdir -p out
-          git clone --depth 1 https://github.com/XTLS/libXray .deps/libXray
-          cd .deps/libXray
+          git init -q .deps/libXray && cd .deps/libXray
+          git fetch -q --depth 1 https://github.com/XTLS/libXray "$LIBXRAY_SHA" && git checkout -q FETCH_HEAD
+          # Только iPhone — без симулятора, macOS и Catalyst: в 3–4 раза быстрее
+          sed -i '' 's/"ios,iossimulator,macos,maccatalyst"/"ios"/' build/app/apple_gomobile.py
           python3 build/main.py apple gomobile 2>&1 | tee ../../out/build-ios-core.log
-          mkdir -p ../../app/ios/Frameworks
-          rm -rf ../../app/ios/Frameworks/LibXray.xcframework
-          cp -R LibXray.xcframework ../../app/ios/Frameworks/
+          mkdir -p ../../.core && ditto -c -k --keepParent LibXray.xcframework ../../.core/LibXray.xcframework.zip
+          cd ../..
+          gh release create "$CORE_TAG" -R "$GITHUB_REPOSITORY" .core/LibXray.xcframework.zip \
+            --title "Ядро Xray для iOS ($CORE_TAG)" --notes "libXray $LIBXRAY_SHA, только ios (arm64). Собирается один раз." \
+            || gh release upload "$CORE_TAG" -R "$GITHUB_REPOSITORY" .core/LibXray.xcframework.zip --clobber
+          echo "$(date -u +%T) ядро собрано и сохранено в Release" >> out/TIMING.txt
 
+      - name: Ядро → проект
+        run: |
+          rm -rf app/ios/Frameworks/LibXray.xcframework && mkdir -p app/ios/Frameworks
+          ditto -x -k .core/LibXray.xcframework.zip app/ios/Frameworks/
+          ls app/ios/Frameworks/LibXray.xcframework
+
+      # --- Кэш: Flutter SDK, pub-пакеты, Swift-пакеты ---
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
+            app/build/ios/**/SourcePackages
+            app/ios/Flutter/ephemeral/Packages/.packages
+          key: ios-deps-${{ hashFiles('app/pubspec.lock') }}
+          restore-keys: ios-deps-
 
       - name: Сборка Netro.app (без подписи)
         id: build
         working-directory: app
         run: |
           set -o pipefail
+          echo "$(date -u +%T) сборка приложения начата" >> ../out/TIMING.txt
           flutter build ios --release --no-codesign 2>&1 | tee ../out/build-ios.log
+          echo "$(date -u +%T) сборка приложения готова" >> ../out/TIMING.txt
 
-      - name: Упаковка .ipa
+      - name: Упаковка и проверка .ipa
         id: ipa
-        if: steps.build.outcome == 'success'
         run: |
+          set -e
           VER=$(grep '^version:' app/pubspec.yaml | sed 's/version: //; s/+.*//')
-          rm -rf Payload && mkdir Payload
-          cp -R app/build/ios/iphoneos/Runner.app Payload/Netro.app
-          ls Payload/Netro.app/PlugIns | tee -a out/build-ios.log
+          APP=app/build/ios/iphoneos/Runner.app
+          test -d "$APP/PlugIns/NetroTunnel.appex" || { echo "НЕТ PlugIns/NetroTunnel.appex"; exit 1; }
+          test -f "$APP/PlugIns/NetroTunnel.appex/NetroTunnel" || { echo "НЕТ бинарника расширения"; exit 1; }
+          rm -rf Payload && mkdir Payload && cp -R "$APP" Payload/Netro.app
           zip -qry "out/Netro-$VER-ios-unsigned.ipa" Payload
-          ls -la out
+          {
+            echo "--- состав ---"
+            du -sh Payload/Netro.app Payload/Netro.app/PlugIns/NetroTunnel.appex
+            /usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' Payload/Netro.app/Info.plist
+            /usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' Payload/Netro.app/PlugIns/NetroTunnel.appex/Info.plist
+            /usr/libexec/PlistBuddy -c 'Print MinimumOSVersion' Payload/Netro.app/Info.plist
+            ls -la out/*.ipa
+          } >> out/TIMING.txt 2>&1
+          echo "$(date -u +%T) .ipa готов" >> out/TIMING.txt
 
+      - uses: actions/upload-artifact@v4
+        if: steps.ipa.outcome == 'success'
+        with:
+          name: netro-ios
+          path: out/*.ipa
+
+      # Отдаём результат в ветку builds-ios (так его забирает Claude — без доступа к API)
       - name: Выгрузка в ветку builds-ios
         if: always()
         run: |
           cd out
-          echo "commit: $GITHUB_SHA" > BUILD_INFO.txt
-          echo "core: ${{ steps.core.outcome }} build: ${{ steps.build.outcome }} ipa: ${{ steps.ipa.outcome }}" >> BUILD_INFO.txt
-          date -u >> BUILD_INFO.txt
+          {
+            echo "commit: $GITHUB_SHA"
+            echo "core: ${{ steps.core_dl.outcome }} build: ${{ steps.build.outcome }} ipa: ${{ steps.ipa.outcome }}"
+          } > BUILD_INFO.txt
           git init -q -b builds-ios
-          git config user.name "netro-ci"
-          git config user.email "ci@netro.local"
-          git add -A
-          git commit -q -m "iOS build $GITHUB_SHA"
+          git config user.name "netro-ci"; git config user.email "ci@netro.local"
+          git add -A && git commit -q -m "iOS build $GITHUB_SHA"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" builds-ios
