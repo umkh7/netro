@@ -68,6 +68,15 @@ end
 link(ext, fw_ref)
 link(ext, ne_ref)
 
+# Встраивание расширения должно идти сразу после линковки — раньше скриптов Flutter,
+# иначе Xcode находит цикл («Cycle inside Runner»).
+embed = app.build_phases.find { |p| p.respond_to?(:name) && p.name == 'Embed Foundation Extensions' }
+if embed
+  app.build_phases.delete(embed)
+  idx = app.build_phases.index(app.frameworks_build_phase)
+  app.build_phases.insert(idx + 1, embed)
+end
+
 ext.build_configurations.each do |c|
   s = c.build_settings
   s['PRODUCT_BUNDLE_IDENTIFIER'] = "#{APP_ID}.tunnel"
