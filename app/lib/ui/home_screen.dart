@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 
@@ -57,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
-        LargeTitle('Netro', actions: [
+        LargeTitle('Netro', leading: Image.asset('assets/netro_glyph.png', width: 30, height: 30), actions: [
           IconAction(Icons.add_rounded, 'Добавить', widget.openAdd),
           IconAction(Icons.settings_outlined, 'Настройки', widget.openSettings),
         ]),
@@ -107,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ]),
         ),
         Segmented<ConnMode>(
-          items: const {ConnMode.tun: 'Туннель (VPN)', ConnMode.proxy: 'Системный прокси'},
+          items: {ConnMode.tun: 'Туннель (VPN)', ConnMode.proxy: Platform.isWindows ? 'Системный прокси' : 'Только прокси'},
           value: st.mode,
           onChanged: st.setMode,
         ),

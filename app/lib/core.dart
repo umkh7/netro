@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+import 'config_builder.dart' show httpPort;
+import 'core_windows.dart' as win;
 import 'models.dart';
 
 /// Мост к нативному ядру Xray (libXray) и VPN-сервису платформы.
@@ -13,7 +15,15 @@ class Core {
 
   static Stream<ConnState>? _states;
 
-  static Stream<ConnState> get states => _states ??= _ev
+  static bool get _isWin => Platform.isWindows;
+  static final _winStates = StreamController<ConnState>.broadcast();
+  static ConnState _winState = ConnState.off;
+  static void _setWin(ConnState s) {
+    _winState = s;
+    _winStates.add(s);
+  }
+
+  static Stream<ConnState> get states => _isWin ? _winStates.stream : _states ??= _ev
       .receiveBroadcastStream()
       .map((e) => switch (e as String) {
             'connecting' => ConnState.connecting,
@@ -25,7 +35,7 @@ class Core {
 
   static Future<Map<String, dynamic>> _invoke(String method, Map<String, dynamic> payload) async {
     final req = jsonEncode({'apiVersion': 3, 'method': method, 'payload': payload});
-    final res = await _ch.invokeMethod<String>('invoke', req);
+    final res = _isWin ? await win.winInvoke(req) : await _ch.invokeMethod<String>('invoke', req);
     final m = jsonDecode(res ?? '{}') as Map<String, dynamic>;
     if (m['success'] != true) {
       throw CoreError((m['error'] as String?) ?? 'Ошибка ядра');
@@ -77,15 +87,50 @@ class Core {
 
   /// Запуск. [config] — полный конфиг Xray без env (fd добавляет платформа).
   static Future<void> start(Map<String, dynamic> config, ConnMode mode) async {
+    if (_isWin) {
+      _setWin(ConnState.connecting);
+      try {
+        await _invoke('runXray', {'xrayJson': jsonEncode(config)});
+        if (mode == ConnMode.proxy) await win.setSystemProxy('127.0.0.1:$httpPort');
+        _winMode = mode;
+        _setWin(ConnState.on);
+      } catch (e) {
+        _setWin(ConnState.off);
+        rethrow;
+      }
+      return;
+    }
     await _ch.invokeMethod('start', {
       'config': jsonEncode(config),
       'mode': mode.name,
     });
   }
 
-  static Future<void> stop() => _ch.invokeMethod('stop');
+  static ConnMode? _winMode;
+
+  static Future<void> stop() async {
+    if (_isWin) {
+      if (_winMode == ConnMode.proxy) await win.clearSystemProxy();
+      _winMode = null;
+      try {
+        await _invoke('stopXray', {});
+      } catch (_) {}
+      _setWin(ConnState.off);
+      return;
+    }
+    await _ch.invokeMethod('stop');
+  }
+
+  /// Windows: снять наш прокси, если приложение закрылось аварийно.
+  static Future<void> cleanupStaleProxy() async {
+    if (!_isWin) return;
+    try {
+      if (await win.ourProxyIsSet('127.0.0.1:$httpPort')) await win.clearSystemProxy();
+    } catch (_) {}
+  }
 
   static Future<ConnState> current() async {
+    if (_isWin) return _winState;
     final s = await _ch.invokeMethod<String>('state');
     return switch (s) {
       'on' => ConnState.on,

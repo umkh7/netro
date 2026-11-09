@@ -181,12 +181,14 @@ class SectionLabel extends StatelessWidget {
 class LargeTitle extends StatelessWidget {
   final String text;
   final List<Widget> actions;
-  const LargeTitle(this.text, {super.key, this.actions = const []});
+  final Widget? leading;
+  const LargeTitle(this.text, {super.key, this.actions = const [], this.leading});
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 48,
       child: Row(children: [
+        if (leading != null) ...[leading!, const SizedBox(width: 10)],
         Expanded(
           child: Text(text,
               style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -0.6)),

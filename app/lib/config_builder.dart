@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'core.dart';
 import 'models.dart';
 
@@ -37,7 +39,16 @@ Map<String, dynamic> buildXrayConfig(Server server, ConnMode mode) {
         {
           'tag': 'tun',
           'protocol': 'tun',
-          'settings': {'mtu': 1500},
+          'settings': Platform.isWindows
+              ? {
+                  'name': 'Netro',
+                  'mtu': 1500,
+                  'gateway': ['172.19.0.1/30', 'fdfe:dcba:9876::1/126'],
+                  'dns': ['1.1.1.1'],
+                  'autoSystemRoutingTable': ['0.0.0.0/0', '::/0'],
+                  'autoSystemWfpBlockLeak': ['dns', 'misconfigtun'],
+                }
+              : {'mtu': 1500},
           'sniffing': sniff,
         },
       {

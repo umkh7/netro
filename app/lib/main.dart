@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'app_state.dart';
 import 'core.dart';
@@ -13,7 +15,11 @@ import 'ui/kit.dart';
 import 'ui/servers_screen.dart';
 import 'ui/subs_screen.dart';
 
-void main() async {
+/// Ссылка netro://… из командной строки (Windows открывает так из браузера).
+String? startupLink;
+
+void main(List<String> args) async {
+  startupLink = args.where((a) => a.startsWith('netro://')).firstOrNull;
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
@@ -21,9 +27,40 @@ void main() async {
     systemNavigationBarColor: Color(0xFF0E0E10),
     systemNavigationBarIconBrightness: Brightness.light,
   ));
+  if (Platform.isWindows) {
+    await windowManager.ensureInitialized();
+    await Core.cleanupStaleProxy();
+    await windowManager.waitUntilReadyToShow(
+      const WindowOptions(
+        size: Size(440, 860),
+        minimumSize: Size(380, 640),
+        center: true,
+        title: 'Netro',
+        backgroundColor: Colors.black,
+      ),
+      () async {
+        await windowManager.setPreventClose(true);
+        await windowManager.show();
+        await windowManager.focus();
+      },
+    );
+  }
   final st = AppState();
   await st.init();
+  if (Platform.isWindows) windowManager.addListener(_CloseGuard());
   runApp(NetroApp(st: st));
+}
+
+/// Windows: перед закрытием окна выключаем ядро и системный прокси,
+/// иначе интернет останется направленным на несуществующий прокси.
+class _CloseGuard with WindowListener {
+  @override
+  void onWindowClose() async {
+    try {
+      await Core.stop().timeout(const Duration(seconds: 3));
+    } catch (_) {}
+    await windowManager.destroy();
+  }
 }
 
 class NetroApp extends StatelessWidget {
@@ -77,6 +114,11 @@ class _ShellState extends State<Shell> {
       });
     }
 
+    if (startupLink != null) {
+      final u = Uri.tryParse(startupLink!);
+      if (u != null) handle(u);
+    }
+    if (Platform.isWindows) return; // на Windows ссылка приходит аргументом запуска
     try {
       final first = await al.getInitialLink();
       if (first != null) handle(first);

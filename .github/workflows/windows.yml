@@ -1,0 +1,61 @@
+name: Windows
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', 'branding/**', '.github/workflows/windows.yml', 'installer/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Сборка Netro.exe
+        id: build
+        working-directory: app
+        run: |
+          set -o pipefail
+          mkdir -p ../out
+          flutter build windows --release 2>&1 | tee ../out/build-windows.log
+
+      - name: Установщик (Inno Setup)
+        if: steps.build.outcome == 'success'
+        run: |
+          set -o pipefail
+          if ! command -v iscc >/dev/null 2>&1 && [ ! -f "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" ]; then
+            choco install innosetup -y --no-progress
+          fi
+          ISCC="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
+          VER=$(grep '^version:' app/pubspec.yaml | sed 's/version: //; s/+.*//')
+          "$ISCC" //DAppVersion=$VER installer/netro.iss 2>&1 | tee -a out/build-windows.log
+          cd app/build/windows/x64/runner/Release && 7z a -tzip "../../../../../../out/Netro-$VER-windows-portable.zip" . > /dev/null
+
+      - name: Выгрузка в ветку builds-windows
+        if: always()
+        run: |
+          cd out
+          echo "commit: $GITHUB_SHA" > BUILD_INFO.txt
+          echo "status: ${{ steps.build.outcome }}" >> BUILD_INFO.txt
+          date -u >> BUILD_INFO.txt
+          git init -q -b builds-windows
+          git config user.name "netro-ci"
+          git config user.email "ci@netro.local"
+          git add -A
+          git commit -q -m "Windows build $GITHUB_SHA (${{ steps.build.outcome }})"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" builds-windows
