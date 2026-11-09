@@ -5,36 +5,43 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../app_state.dart';
+import '../models.dart';
 import 'kit.dart';
 
 bool get canScanQr => Platform.isAndroid || Platform.isIOS;
 
-class AddScreen extends StatefulWidget {
+/// Открыть панель добавления. Возвращает добавленную подписку (или null).
+Future<Subscription?> showAddSheet(BuildContext context, AppState st) =>
+    showSheet<Subscription>(context, AddPanel(st: st));
+
+class AddPanel extends StatefulWidget {
   final AppState st;
-  final VoidCallback onAdded;
-  const AddScreen({super.key, required this.st, required this.onAdded});
+  const AddPanel({super.key, required this.st});
   @override
-  State<AddScreen> createState() => _AddScreenState();
+  State<AddPanel> createState() => _AddPanelState();
 }
 
-class _AddScreenState extends State<AddScreen> {
+class _AddPanelState extends State<AddPanel> {
   final _ctl = TextEditingController();
   bool _busy = false;
+  bool _manual = false;
+  String? _error;
 
   Future<void> _add(String text) async {
     if (_busy) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
       final sub = await widget.st.addFromText(text);
-      _ctl.clear();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Добавлено: ${sub.title} · ${sub.servers.length} '
-              '${plural(sub.servers.length, 'сервер', 'сервера', 'серверов')}')));
-      widget.onAdded();
+      HapticFeedback.mediumImpact();
+      Navigator.pop(context, sub);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      HapticFeedback.heavyImpact();
+      setState(() => _error = '$e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -44,11 +51,10 @@ class _AddScreenState extends State<AddScreen> {
     final d = await Clipboard.getData(Clipboard.kTextPlain);
     final t = d?.text?.trim() ?? '';
     if (t.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Буфер обмена пуст')));
-      }
+      setState(() => _error = 'В буфере обмена пусто. Скопируйте ссылку подписки и нажмите ещё раз');
       return;
     }
+    _ctl.text = t;
     await _add(t);
   }
 
@@ -56,75 +62,156 @@ class _AddScreenState extends State<AddScreen> {
     final code = await Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const _QrPage(), fullscreenDialog: true),
     );
-    if (code != null && code.isNotEmpty) await _add(code);
-  }
-
-  Widget _action(IconData icon, Color bg, String text, VoidCallback onTap, {bool chevron = false}) {
-    return InkWell(
-      onTap: _busy ? null : onTap,
-      child: SizedBox(
-        height: 54,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(7)),
-              child: Icon(icon, size: 18, color: Colors.white),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Text(text, style: const TextStyle(fontSize: 16))),
-            if (chevron) const Chevron(),
-          ]),
-        ),
-      ),
-    );
+    if (code != null && code.isNotEmpty) {
+      _ctl.text = code;
+      await _add(code);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      children: [
-        const LargeTitle('Добавить'),
-        const SizedBox(height: 10),
-        NCard(
-          child: Column(children: [
-            _action(Icons.content_paste_rounded, C.accent, 'Вставить из буфера', _paste),
-            if (canScanQr) ...[
-              const Hairline(indent: 58),
-              _action(Icons.qr_code_scanner_rounded, const Color(0xFF30A46C), 'Сканировать QR-код', _scan,
-                  chevron: true),
-            ],
-          ]),
-        ),
-        const SectionLabel('Вручную'),
-        NCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-          child: TextField(
-            controller: _ctl,
-            minLines: 1,
-            maxLines: 4,
-            style: const TextStyle(fontSize: 16),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              hintText: 'Ссылка подписки или ключ',
-              hintStyle: TextStyle(color: C.gray),
-            ),
-          ),
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottom),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 4),
+          child: Text('Добавить подписку', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
         ),
         const Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Text(
-            'Поддерживаются ссылки https:// и ключи vless, vmess, trojan, shadowsocks, hysteria2. '
-            'Ключи хранятся только на этом устройстве.',
-            style: TextStyle(fontSize: 13, height: 1.45, color: C.gray),
-          ),
+          padding: EdgeInsets.only(left: 4, bottom: 14),
+          child: Text('Ссылка из бота, ключ vless/vmess/trojan/ss или QR-код',
+              style: TextStyle(fontSize: 14, color: C.gray)),
         ),
-        const SizedBox(height: 16),
-        Btn('Добавить', primary: true, busy: _busy, onTap: () => _add(_ctl.text)),
-      ],
+        Row(children: [
+          Expanded(
+            child: _BigAction(
+              icon: Icons.content_paste_rounded,
+              color: C.accent,
+              title: 'Из буфера',
+              onTap: _busy ? null : _paste,
+            ),
+          ),
+          if (canScanQr) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              child: _BigAction(
+                icon: Icons.qr_code_scanner_rounded,
+                color: const Color(0xFF30A46C),
+                title: 'QR-код',
+                onTap: _busy ? null : _scan,
+              ),
+            ),
+          ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: _BigAction(
+              icon: Icons.keyboard_rounded,
+              color: const Color(0xFF8E5CF7),
+              title: 'Вручную',
+              onTap: _busy ? null : () => setState(() => _manual = !_manual),
+            ),
+          ),
+        ]),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          child: !_manual
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                      decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(14)),
+                      child: TextField(
+                        controller: _ctl,
+                        autofocus: true,
+                        minLines: 1,
+                        maxLines: 4,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        textCapitalization: TextCapitalization.none,
+                        keyboardType: TextInputType.url,
+                        style: const TextStyle(fontSize: 15),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'https://… или vless://…',
+                          hintStyle: TextStyle(color: C.gray),
+                        ),
+                        onSubmitted: _add,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Btn('Добавить', primary: true, busy: _busy, onTap: () => _add(_ctl.text)),
+                  ]),
+                ),
+        ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          child: _error == null
+              ? (_busy && !_manual
+                  ? const Padding(
+                      key: ValueKey('busy'),
+                      padding: EdgeInsets.only(top: 18),
+                      child: Center(
+                          child: SizedBox(
+                              width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
+                    )
+                  : const SizedBox(key: ValueKey('none')))
+              : Container(
+                  key: ValueKey(_error),
+                  margin: const EdgeInsets.only(top: 14),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: C.red.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: C.red.withValues(alpha: 0.35)),
+                  ),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Icon(Icons.error_outline_rounded, color: C.red, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(_error!, style: const TextStyle(fontSize: 14, height: 1.35))),
+                  ]),
+                ),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(4, 14, 4, 0),
+          child: Row(children: [
+            Icon(Icons.lock_outline_rounded, size: 15, color: C.gray),
+            SizedBox(width: 6),
+            Expanded(
+              child: Text('Ключи хранятся только на этом устройстве',
+                  style: TextStyle(fontSize: 12.5, color: C.gray)),
+            ),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+class _BigAction extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final VoidCallback? onTap;
+  const _BigAction({required this.icon, required this.color, required this.title, this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      child: Container(
+        height: 92,
+        decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(16)),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          RowIcon(icon, color),
+          const SizedBox(height: 10),
+          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        ]),
+      ),
     );
   }
 }
@@ -154,6 +241,7 @@ class _QrPageState extends State<_QrPage> {
             final v = cap.barcodes.map((b) => b.rawValue).whereType<String>().firstOrNull;
             if (v != null && v.isNotEmpty) {
               _done = true;
+              HapticFeedback.mediumImpact();
               Navigator.pop(context, v);
             }
           },

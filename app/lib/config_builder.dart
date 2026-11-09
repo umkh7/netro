@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'core.dart';
 import 'models.dart';
+import 'settings.dart';
 
 const socksPort = 10808;
 const httpPort = 10809;
@@ -20,7 +21,8 @@ const _privateNets = [
 /// Полный конфиг Xray для выбранного сервера.
 /// TUN-режим: inbound «tun» (fd добавляет Android/iOS), плюс локальные SOCKS/HTTP.
 /// Прокси-режим: только локальные SOCKS/HTTP (на Windows — системный прокси).
-Map<String, dynamic> buildXrayConfig(Server server, ConnMode mode) {
+Map<String, dynamic> buildXrayConfig(Server server, ConnMode mode, Settings st) {
+  final dnsIp = dnsById(st.dns).ip;
   final proxy = Map<String, dynamic>.from(server.outbound)..['tag'] = 'proxy';
   final sniff = {
     'enabled': true,
@@ -44,7 +46,7 @@ Map<String, dynamic> buildXrayConfig(Server server, ConnMode mode) {
                   'name': 'Netro',
                   'mtu': 1500,
                   'gateway': ['172.19.0.1/30', 'fdfe:dcba:9876::1/126'],
-                  'dns': ['1.1.1.1'],
+                  'dns': [dnsIp],
                   'autoSystemRoutingTable': ['0.0.0.0/0', '::/0'],
                   'autoSystemWfpBlockLeak': ['dns', 'misconfigtun'],
                 }
@@ -75,7 +77,13 @@ Map<String, dynamic> buildXrayConfig(Server server, ConnMode mode) {
     'routing': {
       'domainStrategy': 'AsIs',
       'rules': [
-        {'type': 'field', 'ip': _privateNets, 'outboundTag': 'direct'},
+        if (st.lanDirect) {'type': 'field', 'ip': _privateNets, 'outboundTag': 'direct'},
+        if (st.ruDirect)
+          {
+            'type': 'field',
+            'domain': ['domain:ru', 'domain:xn--p1ai', 'domain:su', 'domain:xn--80asehdb', 'domain:xn--c1avg'],
+            'outboundTag': 'direct',
+          },
       ],
     },
   };

@@ -22,7 +22,8 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         let v6 = NEIPv6Settings(addresses: ["fdfe:dcba:9876::1"], networkPrefixLengths: [126])
         v6.includedRoutes = [NEIPv6Route.default()]
         settings.ipv6Settings = v6
-        settings.dnsSettings = NEDNSSettings(servers: ["1.1.1.1"])
+        let dns = proto.providerConfiguration?["dns"] as? String ?? "1.1.1.1"
+        settings.dnsSettings = NEDNSSettings(servers: [dns])
 
         setTunnelNetworkSettings(settings) { [weak self] err in
             guard let self else { return }

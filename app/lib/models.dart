@@ -48,6 +48,7 @@ class Subscription {
   int? usedBytes;
   int? totalBytes; // 0 или null — без лимита
   bool autoUpdate;
+  bool customTitle; // переименована вручную — не перезаписывать названием с сервера
   String? supportUrl;
   String? webPageUrl;
 
@@ -61,6 +62,7 @@ class Subscription {
     this.usedBytes,
     this.totalBytes,
     this.autoUpdate = true,
+    this.customTitle = false,
     this.supportUrl,
     this.webPageUrl,
   });
@@ -83,6 +85,7 @@ class Subscription {
         'usedBytes': usedBytes,
         'totalBytes': totalBytes,
         'autoUpdate': autoUpdate,
+        'customTitle': customTitle,
         'supportUrl': supportUrl,
         'webPageUrl': webPageUrl,
       };
@@ -99,6 +102,7 @@ class Subscription {
         usedBytes: j['usedBytes'] as int?,
         totalBytes: j['totalBytes'] as int?,
         autoUpdate: (j['autoUpdate'] as bool?) ?? true,
+        customTitle: (j['customTitle'] as bool?) ?? false,
         supportUrl: j['supportUrl'] as String?,
         webPageUrl: j['webPageUrl'] as String?,
       );

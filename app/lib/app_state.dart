@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'config_builder.dart';
 import 'core.dart';
 import 'models.dart';
+import 'settings.dart';
 import 'sub_service.dart';
 
 class AppState extends ChangeNotifier {
@@ -20,6 +21,10 @@ class AppState extends ChangeNotifier {
   bool pinging = false;
   final Set<String> refreshing = {};
   String? lastError;
+  Settings settings = Settings();
+  Map<String, dynamic>? ip; // IP и страна выхода после подключения
+  bool ipLoading = false;
+  int sessionDown = 0, sessionUp = 0;
 
   late SharedPreferences _p;
   StreamSubscription? _stateSub;
@@ -36,6 +41,7 @@ class AppState extends ChangeNotifier {
     }
     selectedId = _p.getString('selected');
     mode = _p.getString('mode') == 'proxy' ? ConnMode.proxy : ConnMode.tun;
+    settings = Settings.fromJson(_p.getString('settings'));
     _stateSub = Core.states.listen(_onState);
     try {
       _onState(await Core.current());
@@ -47,15 +53,50 @@ class AppState extends ChangeNotifier {
         unawaited(refresh(s, silent: true));
       }
     }
+    if (settings.autoConnect && conn == ConnState.off && selected != null) {
+      unawaited(connect());
+    }
+  }
+
+  Future<void> saveSettings() async {
+    await _p.setString('settings', settings.encode());
+    notifyListeners();
+  }
+
+  /// Изменение настроек, влияющих на конфиг: переподключаемся, если VPN включён.
+  Future<void> applySettings() async {
+    await saveSettings();
+    if (conn == ConnState.on) {
+      await Core.stop();
+      await connect();
+    }
+  }
+
+  Future<void> refreshIp() async {
+    if (conn != ConnState.on) return;
+    ipLoading = true;
+    notifyListeners();
+    ip = await Core.ipInfo();
+    ipLoading = false;
+    notifyListeners();
   }
 
   void _onState(ConnState s) {
     conn = s;
     if (s == ConnState.on) {
+      final first = connectedAt == null;
       connectedAt ??= DateTime.now();
       _startTicker();
+      if (first) {
+        ip = null;
+        Future.delayed(const Duration(milliseconds: 800), refreshIp);
+      }
     } else {
-      if (s != ConnState.connecting) connectedAt = null;
+      if (s != ConnState.connecting) {
+        connectedAt = null;
+        ip = null;
+        sessionDown = sessionUp = 0;
+      }
       _ticker?.cancel();
       _ticker = null;
       downBps = upBps = 0;
@@ -70,6 +111,10 @@ class AppState extends ChangeNotifier {
       if (t != null && _lastTotals != null) {
         downBps = (t[0] - _lastTotals![0]).clamp(0, 1 << 40);
         upBps = (t[1] - _lastTotals![1]).clamp(0, 1 << 40);
+      }
+      if (t != null) {
+        sessionDown = t[0];
+        sessionUp = t[1];
       }
       _lastTotals = t;
       notifyListeners();
@@ -132,6 +177,14 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> connect() async {
+    if (settings.autoBest && conn == ConnState.off) {
+      final sub = selected == null ? null : subOf(selected!);
+      if (sub != null) {
+        await pingSub(sub, quiet: true);
+        final best = bestOf(sub);
+        if (best != null) selectedId = best.id;
+      }
+    }
     final s = selected;
     if (s == null) {
       lastError = 'Сначала добавьте подписку';
@@ -145,7 +198,12 @@ class AppState extends ChangeNotifier {
     try {
       // На iOS есть только туннель (NetworkExtension).
       final m = Platform.isIOS ? ConnMode.tun : mode;
-      await Core.start(buildXrayConfig(s, m), m);
+      Core.setNativeOptions(
+        dns: dnsById(settings.dns).ip,
+        split: settings.split.name,
+        apps: settings.splitApps,
+      );
+      await Core.start(buildXrayConfig(s, m, settings), m);
     } catch (e) {
       conn = ConnState.off;
       lastError = 'Не удалось подключиться: $e';
@@ -208,8 +266,8 @@ class AppState extends ChangeNotifier {
     try {
       final r = await fetchSubscription(s.url!, s.id);
       final oldSel = selected;
+      if (!s.customTitle) s.title = r.title;
       s
-        ..title = r.title
         ..servers = r.servers
         ..updatedAt = DateTime.now()
         ..expire = r.expire
@@ -246,9 +304,9 @@ class AppState extends ChangeNotifier {
   }
 
   /// Пинг серверов подписки. Пока VPN включён, ядро занято — пинг недоступен.
-  Future<void> pingSub(Subscription s) async {
+  Future<void> pingSub(Subscription s, {bool quiet = false}) async {
     if (pinging) return;
-    if (conn == ConnState.on || conn == ConnState.connecting) {
+    if (!quiet && (conn == ConnState.on || conn == ConnState.connecting)) {
       lastError = 'Отключите VPN, чтобы проверить пинг';
       notifyListeners();
       return;
@@ -256,7 +314,8 @@ class AppState extends ChangeNotifier {
     pinging = true;
     notifyListeners();
     try {
-      final d = await Core.ping(s.servers.map((e) => e.outbound).toList());
+      final d = await Core.ping(s.servers.map((e) => e.outbound).toList(),
+          url: settings.pingUrl, timeout: settings.pingTimeout);
       for (var i = 0; i < s.servers.length && i < d.length; i++) {
         s.servers[i].ping = d[i];
       }
@@ -264,6 +323,68 @@ class AppState extends ChangeNotifier {
     } finally {
       pinging = false;
       notifyListeners();
+    }
+  }
+
+  /// Сервер с лучшим пингом в подписке (без ошибок).
+  Server? bestOf(Subscription s) {
+    final ok = s.servers.where((x) => x.ping != null && x.ping! < 10000).toList()
+      ..sort((a, b) => a.ping!.compareTo(b.ping!));
+    return ok.firstOrNull;
+  }
+
+  Future<void> selectBest(Subscription s) async {
+    if (conn == ConnState.off) await pingSub(s);
+    final b = bestOf(s);
+    if (b == null) {
+      lastError = conn == ConnState.off ? 'Ни один сервер не ответил' : 'Отключите VPN, чтобы проверить пинг';
+      notifyListeners();
+      return;
+    }
+    await select(b);
+  }
+
+  /// Серверы подписки в выбранном порядке.
+  List<Server> sorted(Subscription s) {
+    final l = [...s.servers];
+    switch (settings.sort) {
+      case SortMode.ping:
+        l.sort((a, b) => (a.ping ?? 99999).compareTo(b.ping ?? 99999));
+      case SortMode.name:
+        l.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      case SortMode.list:
+        break;
+    }
+    return l;
+  }
+
+  Future<void> setSort(SortMode m) async {
+    settings.sort = m;
+    await saveSettings();
+  }
+
+  Future<void> removeServer(Server sv) async {
+    final sub = subOf(sv);
+    if (sub == null) return;
+    sub.servers = sub.servers.where((x) => x.id != sv.id).toList();
+    if (sub.isManual && sub.servers.isEmpty) subs.remove(sub);
+    if (selectedId == sv.id) selectedId = allServers.firstOrNull?.id;
+    await _save();
+    notifyListeners();
+  }
+
+  Future<void> rename(Subscription s, String title) async {
+    final t = title.trim();
+    if (t.isEmpty) return;
+    s.title = t;
+    s.customTitle = true;
+    await _save();
+    notifyListeners();
+  }
+
+  Future<void> refreshAll() async {
+    for (final s in subs.where((s) => !s.isManual)) {
+      await refresh(s);
     }
   }
 

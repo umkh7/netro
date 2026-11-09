@@ -8,8 +8,8 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app_state.dart';
 import 'core.dart';
-import 'sub_service.dart';
 import 'ui/add_screen.dart';
+import 'ui/settings_screen.dart';
 import 'ui/home_screen.dart';
 import 'ui/kit.dart';
 import 'ui/servers_screen.dart';
@@ -107,7 +107,7 @@ class _ShellState extends State<Shell> {
       }
       if (url == null || url.isEmpty) return;
       widget.st.addFromText(url).then((s) {
-        setState(() => _tab = 1);
+        if (mounted) setState(() => _tab = 1);
         _toast('Добавлено: ${s.title}');
       }).catchError((e) {
         _toast('$e');
@@ -145,29 +145,13 @@ class _ShellState extends State<Shell> {
     super.dispose();
   }
 
-  void _settings() async {
-    final v = await Core.version();
-    if (!mounted) return;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: C.field,
-      showDragHandle: true,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Netro', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text('Версия $appVersion${v.isEmpty ? '' : ' · ядро Xray $v'}',
-              style: const TextStyle(color: C.gray)),
-          const SizedBox(height: 16),
-          const Text(
-            'Ключи доступа хранятся только на этом устройстве. '
-            'Локальный прокси: SOCKS5 127.0.0.1:10808, HTTP 127.0.0.1:10809.',
-            style: TextStyle(fontSize: 14, height: 1.45, color: C.gray),
-          ),
-        ]),
-      ),
-    );
+  Future<void> _openAdd() async {
+    final sub = await showAddSheet(context, widget.st);
+    if (sub != null && mounted) {
+      setState(() => _tab = 1);
+      _toast('Добавлено: ${sub.title} · ${sub.servers.length} '
+          '${plural(sub.servers.length, 'сервер', 'сервера', 'серверов')}');
+    }
   }
 
   @override
@@ -175,22 +159,53 @@ class _ShellState extends State<Shell> {
     final st = widget.st;
     void go(int i) => setState(() => _tab = i);
     final pages = [
-      HomeScreen(
-        st: st,
-        openServers: () => go(1),
-        openSubs: () => go(2),
-        openAdd: () => go(3),
-        openSettings: _settings,
-      ),
-      ServersScreen(st: st, openAdd: () => go(3)),
-      SubsScreen(st: st, openAdd: () => go(3)),
-      AddScreen(st: st, onAdded: () => go(1)),
+      HomeScreen(st: st, openServers: () => go(1), openSubs: () => go(2), openAdd: _openAdd),
+      ServersScreen(st: st, openAdd: _openAdd),
+      SubsScreen(st: st, openAdd: _openAdd),
+      SettingsScreen(st: st),
     ];
     return ScaffoldMessenger(
       key: _messenger,
       child: Scaffold(
-        body: SafeArea(bottom: false, child: IndexedStack(index: _tab, children: pages)),
-        bottomNavigationBar: _TabBar(index: _tab, onTap: go),
+        body: SafeArea(
+          bottom: false,
+          child: Stack(children: [
+            for (var i = 0; i < pages.length; i++)
+              _FadeTab(active: i == _tab, child: pages[i]),
+          ]),
+        ),
+        bottomNavigationBar: _TabBar(index: _tab, onTap: (i) {
+          if (i != _tab) HapticFeedback.selectionClick();
+          go(i);
+        }),
+      ),
+    );
+  }
+}
+
+/// Плавная смена вкладок: активная проявляется с лёгким сдвигом, остальные гаснут.
+/// Состояние вкладок (прокрутка, поиск) сохраняется.
+class _FadeTab extends StatelessWidget {
+  final bool active;
+  final Widget child;
+  const _FadeTab({required this.active, required this.child});
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: !active,
+      child: TickerMode(
+        enabled: active,
+        child: AnimatedOpacity(
+          opacity: active ? 1 : 0,
+          duration: Duration(milliseconds: active ? 260 : 140),
+          curve: Curves.easeOut,
+          child: AnimatedSlide(
+            offset: active ? Offset.zero : const Offset(0, 0.015),
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            child: child,
+          ),
+        ),
       ),
     );
   }
@@ -207,7 +222,7 @@ class _TabBar extends StatelessWidget {
       (Icons.power_settings_new_rounded, 'Подключение'),
       (Icons.public_rounded, 'Серверы'),
       (Icons.layers_outlined, 'Подписки'),
-      (Icons.add_circle_outline_rounded, 'Добавить'),
+      (Icons.tune_rounded, 'Настройки'),
     ];
     return Container(
       decoration: const BoxDecoration(
@@ -224,7 +239,12 @@ class _TabBar extends StatelessWidget {
                 child: InkResponse(
                   onTap: () => onTap(i),
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(items[i].$1, size: 25, color: i == index ? C.accent : C.gray),
+                    AnimatedScale(
+                      scale: i == index ? 1.08 : 1,
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutBack,
+                      child: Icon(items[i].$1, size: 25, color: i == index ? C.accent : C.gray),
+                    ),
                     const SizedBox(height: 2),
                     Text(items[i].$2,
                         style: TextStyle(

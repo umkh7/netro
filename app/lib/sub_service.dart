@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:async';
+import 'dart:io' show HandshakeException, Platform, SocketException;
 
 import 'package:http/http.dart' as http;
 
@@ -8,7 +9,7 @@ import 'core.dart';
 import 'country.dart';
 import 'models.dart';
 
-const appVersion = '1.0.2';
+const appVersion = '1.1.0';
 
 String get userAgent {
   final os = Platform.isAndroid
@@ -146,12 +147,32 @@ Future<List<Server>> parseServers(String text, String idPrefix) async {
 
 /// Загрузка подписки. Ключи и содержимое ссылки никуда не отправляются.
 Future<SubFetchResult> fetchSubscription(String url, String idPrefix) async {
-  final r = await http.get(Uri.parse(url), headers: {
-    'User-Agent': userAgent,
-    'Accept': '*/*',
-  }).timeout(const Duration(seconds: 20));
+  final uri = Uri.tryParse(url.trim());
+  if (uri == null || uri.host.isEmpty) throw CoreError('Это не похоже на ссылку подписки');
+  http.Response r;
+  try {
+    r = await http.get(uri, headers: {
+      'User-Agent': userAgent,
+      'Accept': '*/*',
+    }).timeout(const Duration(seconds: 20));
+  } on TimeoutException {
+    throw CoreError('Сервер подписки не отвечает. Проверьте интернет и попробуйте ещё раз');
+  } on SocketException {
+    throw CoreError('Нет связи с ${uri.host}. Проверьте интернет или ссылку');
+  } on HandshakeException {
+    throw CoreError('Не удалось установить защищённое соединение с ${uri.host}');
+  }
+  if (r.statusCode == 404) {
+    throw CoreError('Подписка не найдена. Проверьте ссылку — возможно, в ней опечатка');
+  }
+  if (r.statusCode == 401 || r.statusCode == 403) {
+    throw CoreError('Подписка отключена или истекла (${r.statusCode})');
+  }
+  if (r.statusCode >= 500) {
+    throw CoreError('Сервер подписки временно недоступен (${r.statusCode})');
+  }
   if (r.statusCode >= 400) {
-    throw CoreError('Сервер подписки ответил ${r.statusCode}');
+    throw CoreError('Сервер подписки ответил ошибкой ${r.statusCode}');
   }
   final body = utf8.decode(r.bodyBytes, allowMalformed: true);
   final servers = await parseServers(body, idPrefix);

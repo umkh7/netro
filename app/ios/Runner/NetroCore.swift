@@ -32,7 +32,8 @@ final class NetroCore: NSObject, FlutterStreamHandler {
     case "start":
       let args = call.arguments as? [String: Any] ?? [:]
       let config = args["config"] as? String ?? "{}"
-      start(config: config, result)
+      let dns = args["dns"] as? String ?? "1.1.1.1"
+      start(config: config, dns: dns, result)
     case "stop":
       manager?.connection.stopVPNTunnel()
       result(nil)
@@ -51,13 +52,13 @@ final class NetroCore: NSObject, FlutterStreamHandler {
     }
   }
 
-  private func start(config: String, _ result: @escaping FlutterResult) {
+  private func start(config: String, dns: String, _ result: @escaping FlutterResult) {
     loadManager { [weak self] m in
       guard let self, let m else { result(FlutterError(code: "vpn", message: "VPN недоступен", details: nil)); return }
       let proto = NETunnelProviderProtocol()
       proto.providerBundleIdentifier = Self.tunnelBundleId
       proto.serverAddress = "Netro"
-      proto.providerConfiguration = ["config": config]
+      proto.providerConfiguration = ["config": config, "dns": dns]
       m.protocolConfiguration = proto
       m.localizedDescription = "Netro"
       m.isEnabled = true

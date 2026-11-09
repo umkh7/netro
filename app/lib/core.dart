@@ -52,7 +52,8 @@ class Core {
   }
 
   /// Пинг пачками по 5 (ограничение libXray). Возвращает мс; 10000/11000 — ошибка.
-  static Future<List<int>> ping(List<Map<String, dynamic>> outbounds) async {
+  static Future<List<int>> ping(List<Map<String, dynamic>> outbounds,
+      {String url = 'https://cp.cloudflare.com/', int timeout = 5}) async {
     final out = <int>[];
     for (var i = 0; i < outbounds.length; i += 5) {
       final chunk = outbounds.sublist(i, i + 5 > outbounds.length ? outbounds.length : i + 5);
@@ -63,8 +64,8 @@ class Core {
       try {
         final d = await _invoke('pingBatch', {
           'configs': cfgs,
-          'timeout': 5,
-          'url': 'https://cp.cloudflare.com/',
+          'timeout': timeout,
+          'url': url,
         });
         for (final r in (d['results'] as List? ?? [])) {
           out.add(((r as Map)['delay'] as num?)?.toInt() ?? 10000);
@@ -86,6 +87,54 @@ class Core {
   }
 
   /// Запуск. [config] — полный конфиг Xray без env (fd добавляет платформа).
+  /// Ключ-ссылка (vless://…) для одного сервера — чтобы поделиться или показать QR.
+  static Future<String?> shareLink(Map<String, dynamic> outbound) async {
+    try {
+      final d = await _invoke('convertXrayJsonToShareLinks', {
+        'xrayJson': jsonEncode({'outbounds': [outbound]})
+      });
+      final l = (d['links'] as String?)?.trim();
+      return (l == null || l.isEmpty) ? null : l.split('\n').first;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Android: установленные приложения для раздельного туннелирования.
+  static Future<List<AppInfo>> installedApps() async {
+    if (!Platform.isAndroid) return [];
+    final r = await _ch.invokeMethod<List>('apps');
+    return (r ?? [])
+        .map((e) => AppInfo((e as Map)['pkg'] as String, e['name'] as String, e['system'] == true))
+        .toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
+
+  /// IP и страна выхода — запрос идёт через локальный прокси Netro, то есть через VPN.
+  static Future<Map<String, dynamic>?> ipInfo() async {
+    final c = HttpClient()
+      ..findProxy = ((_) => 'PROXY 127.0.0.1:$httpPort')
+      ..connectionTimeout = const Duration(seconds: 6);
+    try {
+      final rq = await c.getUrl(Uri.parse('https://ipwho.is/?fields=ip,country,country_code,city,connection'));
+      rq.headers.set('User-Agent', 'Netro');
+      final rs = await rq.close().timeout(const Duration(seconds: 8));
+      final j = jsonDecode(await rs.transform(utf8.decoder).join()) as Map<String, dynamic>;
+      return j['ip'] == null ? null : j;
+    } catch (_) {
+      return null;
+    } finally {
+      c.close(force: true);
+    }
+  }
+
+  static Map<String, dynamic> _nativeExtra = {};
+
+  /// Параметры для нативной части: DNS, раздельное туннелирование (Android).
+  static void setNativeOptions({required String dns, required String split, required List<String> apps}) {
+    _nativeExtra = {'dns': dns, 'split': split, 'apps': apps};
+  }
+
   static Future<void> start(Map<String, dynamic> config, ConnMode mode) async {
     if (_isWin) {
       _setWin(ConnState.connecting);
@@ -101,6 +150,7 @@ class Core {
       return;
     }
     await _ch.invokeMethod('start', {
+      ..._nativeExtra,
       'config': jsonEncode(config),
       'mode': mode.name,
     });
@@ -154,6 +204,12 @@ class Core {
   }
 
   static const metricsPort = 10813;
+}
+
+class AppInfo {
+  final String pkg, name;
+  final bool system;
+  AppInfo(this.pkg, this.name, this.system);
 }
 
 class HttpClientLite {

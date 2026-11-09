@@ -1,5 +1,6 @@
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class C {
   static const bg = Color(0xFF000000);
@@ -324,4 +325,241 @@ String titleWithoutEmoji(String t) {
   final first = s.characters.first;
   if (first.runes.any((r) => r > 0x2000)) return s.characters.skip(1).toString().trim();
   return s;
+}
+
+// ---------- Движение и отклик ----------
+
+/// Плавный переход на новый экран (iOS-свайп назад работает).
+Route<T> smoothRoute<T>(Widget page) => PageRouteBuilder<T>(
+      transitionDuration: const Duration(milliseconds: 320),
+      reverseTransitionDuration: const Duration(milliseconds: 260),
+      pageBuilder: (_, __, ___) => page,
+      transitionsBuilder: (_, a, __, child) {
+        final c = CurvedAnimation(parent: a, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic);
+        return FadeTransition(
+          opacity: c,
+          child: SlideTransition(
+            position: Tween(begin: const Offset(0.06, 0), end: Offset.zero).animate(c),
+            child: child,
+          ),
+        );
+      },
+    );
+
+/// Кнопка, которая мягко «проседает» при нажатии.
+class Pressable extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final double scale;
+  const Pressable({super.key, required this.child, this.onTap, this.onLongPress, this.scale = 0.97});
+  @override
+  State<Pressable> createState() => _PressableState();
+}
+
+class _PressableState extends State<Pressable> {
+  bool _down = false;
+  void _set(bool v) {
+    if (_down != v) setState(() => _down = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => _set(true),
+      onTapUp: (_) => _set(false),
+      onTapCancel: () => _set(false),
+      onTap: widget.onTap == null
+          ? null
+          : () {
+              HapticFeedback.selectionClick();
+              widget.onTap!();
+            },
+      onLongPress: widget.onLongPress == null
+          ? null
+          : () {
+              _set(false);
+              HapticFeedback.mediumImpact();
+              widget.onLongPress!();
+            },
+      child: AnimatedScale(
+        scale: _down ? widget.scale : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: AnimatedOpacity(
+          opacity: _down ? 0.85 : 1,
+          duration: const Duration(milliseconds: 120),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Плавное появление содержимого (сдвиг снизу + проявление) с задержкой по порядку.
+class Appear extends StatelessWidget {
+  final Widget child;
+  final int index;
+  const Appear({super.key, required this.child, this.index = 0});
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 360 + index * 40),
+      curve: Curves.easeOutCubic,
+      builder: (_, v, c) => Opacity(
+        opacity: v,
+        child: Transform.translate(offset: Offset(0, (1 - v) * 12), child: c),
+      ),
+      child: child,
+    );
+  }
+}
+
+// ---------- Строки списков (как в настройках iOS) ----------
+
+class Group extends StatelessWidget {
+  final List<Widget> children;
+  final String? header;
+  final String? footer;
+  const Group({super.key, required this.children, this.header, this.footer});
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      rows.add(children[i]);
+      if (i < children.length - 1) rows.add(const Hairline(indent: 56));
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (header != null) SectionLabel(header!),
+      ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Container(color: C.card, child: Column(children: rows)),
+      ),
+      if (footer != null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Text(footer!, style: const TextStyle(fontSize: 13, height: 1.4, color: C.gray)),
+        ),
+      const SizedBox(height: 8),
+    ]);
+  }
+}
+
+class RowIcon extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  const RowIcon(this.icon, this.color, {super.key});
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
+        child: Icon(icon, size: 18, color: Colors.white),
+      );
+}
+
+class NavRow extends StatelessWidget {
+  final Widget? leading;
+  final String title;
+  final String? subtitle;
+  final String? value;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final Color? titleColor;
+  final bool chevron;
+  const NavRow(
+      {super.key,
+      this.leading,
+      required this.title,
+      this.subtitle,
+      this.value,
+      this.trailing,
+      this.onTap,
+      this.titleColor,
+      this.chevron = true});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap == null
+            ? null
+            : () {
+                HapticFeedback.selectionClick();
+                onTap!();
+              },
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 52),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Row(children: [
+              if (leading != null) ...[leading!, const SizedBox(width: 12)],
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text(title, style: TextStyle(fontSize: 16, color: titleColor ?? C.text)),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(subtitle!, style: const TextStyle(fontSize: 12.5, color: C.gray, height: 1.3)),
+                  ],
+                ]),
+              ),
+              if (value != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text(value!, style: const TextStyle(fontSize: 15, color: C.gray)),
+                ),
+              if (trailing != null) trailing!,
+              if (trailing == null && onTap != null && chevron) const Chevron(),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SwitchRow extends StatelessWidget {
+  final Widget? leading;
+  final String title;
+  final String? subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const SwitchRow(
+      {super.key, this.leading, required this.title, this.subtitle, required this.value, required this.onChanged});
+  @override
+  Widget build(BuildContext context) => NavRow(
+        leading: leading,
+        title: title,
+        subtitle: subtitle,
+        onTap: () => onChanged(!value),
+        trailing: Switch.adaptive(
+          value: value,
+          onChanged: onChanged,
+          activeTrackColor: C.green,
+          activeThumbColor: Colors.white,
+          inactiveTrackColor: const Color(0xFF39393D),
+          inactiveThumbColor: Colors.white,
+          trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+        ),
+      );
+}
+
+/// Нижняя выезжающая панель в стиле приложения.
+Future<T?> showSheet<T>(BuildContext context, Widget child) => showModalBottomSheet<T>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF111113),
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => child,
+    );
+
+void toast(BuildContext context, String text) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(text)));
 }

@@ -20,6 +20,8 @@ import java.util.concurrent.Executors
  * VPN-сервис Netro. Режим «tun»: весь трафик телефона идёт в TUN, который читает Xray.
  * Режим «proxy»: только локальные SOCKS5/HTTP на 127.0.0.1 (без VPN).
  */
+data class VpnOpts(val dns: String = "1.1.1.1", val split: String = "off", val apps: List<String> = emptyList())
+
 class NetroVpnService : VpnService() {
 
     companion object {
@@ -30,6 +32,7 @@ class NetroVpnService : VpnService() {
         private const val CHANNEL = "netro_vpn"
         private const val NOTIF_ID = 7
         private const val TAG = "Netro"
+        @Volatile var opts = VpnOpts()
 
         fun start(ctx: Context, config: String, mode: String) {
             val i = Intent(ctx, NetroVpnService::class.java)
@@ -81,14 +84,22 @@ class NetroVpnService : VpnService() {
                     .setMtu(1500)
                     .addAddress("172.19.0.1", 30)
                     .addRoute("0.0.0.0", 0)
-                    .addDnsServer("1.1.1.1")
+                    .addDnsServer(opts.dns)
                 try {
                     b.addAddress("fdfe:dcba:9876::1", 126)
                     b.addRoute("::", 0)
                 } catch (_: Exception) {
                 }
-                // Само приложение мимо VPN — чтобы соединения ядра не зацикливались.
-                try { b.addDisallowedApplication(packageName) } catch (_: Exception) {}
+                // Раздельное туннелирование. Само приложение всегда мимо VPN — чтобы ядро не зацикливалось.
+                when (opts.split) {
+                    "include" -> opts.apps.forEach { p -> try { b.addAllowedApplication(p) } catch (_: Exception) {} }
+                    else -> {
+                        try { b.addDisallowedApplication(packageName) } catch (_: Exception) {}
+                        if (opts.split == "exclude") {
+                            opts.apps.forEach { p -> try { b.addDisallowedApplication(p) } catch (_: Exception) {} }
+                        }
+                    }
+                }
                 if (Build.VERSION.SDK_INT >= 29) b.setMetered(false)
                 val pfd = b.establish() ?: throw IllegalStateException("Нет разрешения на VPN")
                 tun = pfd
@@ -97,7 +108,7 @@ class NetroVpnService : VpnService() {
                 cfg.put("env", env)
             }
             LibXray.registerDialerController(protector)
-            try { LibXray.setDNS(protector, "1.1.1.1:53") } catch (e: Exception) { Log.w(TAG, "setDNS: $e") }
+            try { LibXray.setDNS(protector, "${opts.dns}:53") } catch (e: Exception) { Log.w(TAG, "setDNS: $e") }
             val res = XrayCore.invoke("runXray", JSONObject().put("xrayJson", cfg.toString()))
             if (!res.optBoolean("success")) {
                 throw IllegalStateException(res.optString("error", "Ядро не запустилось"))

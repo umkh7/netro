@@ -54,6 +54,11 @@ class MainActivity : FlutterActivity() {
                 "start" -> {
                     val cfg = call.argument<String>("config") ?: return@setMethodCallHandler result.error("arg", "config", null)
                     val mode = call.argument<String>("mode") ?: "tun"
+                    NetroVpnService.opts = VpnOpts(
+                        dns = call.argument<String>("dns") ?: "1.1.1.1",
+                        split = call.argument<String>("split") ?: "off",
+                        apps = call.argument<List<String>>("apps") ?: emptyList(),
+                    )
                     askNotificationsOnce()
                     if (mode == "tun") {
                         val prep = VpnService.prepare(this)
@@ -73,6 +78,23 @@ class MainActivity : FlutterActivity() {
                     result.success(null)
                 }
                 "state" -> result.success(XrayCore.state)
+                "apps" -> io.execute {
+                    val pm = packageManager
+                    val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+                    @Suppress("DEPRECATION")
+                    val list = pm.queryIntentActivities(launcher, 0)
+                        .map { it.activityInfo.applicationInfo }
+                        .distinctBy { it.packageName }
+                        .filter { it.packageName != packageName }
+                        .map {
+                            mapOf(
+                                "pkg" to it.packageName,
+                                "name" to pm.getApplicationLabel(it).toString(),
+                                "system" to ((it.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0),
+                            )
+                        }
+                    main.post { result.success(list) }
+                }
                 else -> result.notImplemented()
             }
         }
