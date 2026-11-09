@@ -1,8 +1,7 @@
 name: Android APK
 
+# Android собирается локально; здесь — только ручной запуск.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
