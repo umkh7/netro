@@ -26,14 +26,18 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Старт
         run: mkdir -p out && echo "$(date -u +%T) старт" > out/TIMING.txt
 
-      - uses: actions/checkout@v4
-
-      - name: Xcode 16.4
+      - name: Xcode (16.4, если есть; иначе самый новый)
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.4.app
+          ls -d /Applications/Xcode*.app | tee -a out/TIMING.txt
+          if [ -d /Applications/Xcode_16.4.app ]; then X=/Applications/Xcode_16.4.app
+          else X=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1); fi
+          sudo xcode-select -s "$X"
+          echo "выбран: $X" >> out/TIMING.txt
           xcodebuild -version | head -1 | tee -a out/TIMING.txt
 
       # --- Ядро: скачать готовое из Release; собрать только если его ещё нет ---
@@ -128,7 +132,7 @@ jobs:
       - name: Выгрузка в ветку builds-ios
         if: always()
         run: |
-          cd out
+          mkdir -p out && cd out
           {
             echo "commit: $GITHUB_SHA"
             echo "core: ${{ steps.core_dl.outcome }} build: ${{ steps.build.outcome }} ipa: ${{ steps.ipa.outcome }}"
