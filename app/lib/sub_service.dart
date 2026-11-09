@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io' show HandshakeException, Platform, SocketException;
+import 'dart:math' show Random;
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config_builder.dart';
 import 'core.dart';
@@ -21,6 +23,43 @@ String get userAgent {
       ? 'Windows'
       : Platform.operatingSystem;
   return 'Netro/$appVersion ($os)';
+}
+
+String? _hwid;
+
+/// Постоянный случайный номер этого устройства. Нужен панели подписки, чтобы
+/// видеть подключённые устройства и соблюдать лимит. Никаких личных данных в нём нет.
+Future<String> deviceId() async {
+  if (_hwid != null) return _hwid!;
+  try {
+    final p = await SharedPreferences.getInstance();
+    var id = p.getString('netro_hwid');
+    if (id == null || id.length < 16) {
+      final r = Random.secure();
+      id = List.generate(
+        16,
+        (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0'),
+      ).join();
+      await p.setString('netro_hwid', id);
+    }
+    return _hwid = id;
+  } catch (_) {
+    return _hwid = 'netro-${Platform.operatingSystem}';
+  }
+}
+
+String get _osName => Platform.isAndroid
+    ? 'Android'
+    : Platform.isIOS
+    ? 'iOS'
+    : Platform.isWindows
+    ? 'Windows'
+    : Platform.operatingSystem;
+
+String get _osVersion {
+  final v = Platform.operatingSystemVersion;
+  final m = RegExp(r'\d+(\.\d+){0,2}').firstMatch(v);
+  return m?.group(0) ?? '';
 }
 
 class SubFetchResult {
@@ -222,8 +261,25 @@ Future<SubFetchResult> fetchSubscription(String url, String idPrefix) async {
     throw CoreError('Это не похоже на ссылку подписки');
   http.Response r;
   try {
+    final hwid = await deviceId();
     r = await http
-        .get(uri, headers: {'User-Agent': userAgent, 'Accept': '*/*'})
+        .get(
+          uri,
+          headers: {
+            'User-Agent': userAgent,
+            'Accept': '*/*',
+            'X-HWID': hwid,
+            'X-Device-OS': _osName,
+            'X-Platform': _osName,
+            'X-Ver-OS': _osVersion,
+            'X-OS-Version': _osVersion,
+            'X-Device-Model': Platform.isIOS
+                ? 'iPhone'
+                : Platform.isWindows
+                ? 'Windows PC'
+                : _osName,
+          },
+        )
         .timeout(const Duration(seconds: 20));
   } on TimeoutException {
     throw CoreError(
