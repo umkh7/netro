@@ -1,0 +1,376 @@
+Building flutter tool... 
+Running pub upgrade... 
+Resolving dependencies...
+Downloading packages...
+Got dependencies.
+Resolving dependencies...
+Downloading packages...
+  cupertino_icons 1.0.9 (2.0.0 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  petitparser 7.0.2 (7.1.0 available)
+  qr 3.0.3 (4.0.1 available)
+  screen_retriever 0.2.2 (0.3.1 available)
+  shared_preferences_foundation 2.5.7 (2.6.1 available)
+  test_api 0.7.12 (0.7.15 available)
+  vector_math 2.4.0 (2.4.4 available)
+  window_manager 0.5.2 (0.6.0 available)
+  xml 7.0.1 (7.1.0 available)
+Got dependencies!
+10 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Building Windows application...                                   102.6s
+√ Built build\windows\x64\runner\Release\Netro.exe
+Inno Setup 6 Command-Line Compiler
+Copyright (C) 1997-2026 Jordan Russell. All rights reserved.
+Portions Copyright (C) 2000-2026 Martijn Laan. All rights reserved.
+Portions Copyright (C) 2001-2004 Alex Yackimoff. All rights reserved.
+https://www.innosetup.com
+
+Compiler engine version: Inno Setup 6.7.1
+Non-commercial use only
+
+Preprocessing
+   Reading file: C:\Program Files (x86)\Inno Setup 6\ISPPBuiltins.iss
+Parsing [Setup] section, line 7
+Parsing [Setup] section, line 8
+Parsing [Setup] section, line 9
+Parsing [Setup] section, line 10
+Parsing [Setup] section, line 11
+Parsing [Setup] section, line 12
+Parsing [Setup] section, line 13
+Parsing [Setup] section, line 14
+Parsing [Setup] section, line 15
+Parsing [Setup] section, line 16
+Parsing [Setup] section, line 17
+Parsing [Setup] section, line 18
+Parsing [Setup] section, line 19
+Parsing [Setup] section, line 20
+Parsing [Setup] section, line 21
+Parsing [Setup] section, line 22
+Parsing [Setup] section, line 23
+Reading file (WizardImageFile)
+Reading file (WizardSmallImageFile)
+Preparing Setup program executable
+   Verification successful
+   Updating icons (Setup.e32)
+   Updating version info (Setup.e32)
+Determining language code pages
+Parsing [Languages] section, line 26
+   Reading file: C:\Program Files (x86)\Inno Setup 6\Languages\Russian.isl
+Parsing [Languages] section, line 27
+   Reading file: C:\Program Files (x86)\Inno Setup 6\Default.isl
+   Messages in script file
+Reading default messages from Default.isl
+Parsing [Languages] section, line 26
+   Reading file: C:\Program Files (x86)\Inno Setup 6\Languages\Russian.isl
+Parsing [Languages] section, line 27
+   Reading file: C:\Program Files (x86)\Inno Setup 6\Default.isl
+Parsing [LangOptions], [Messages], and [CustomMessages] sections
+   Messages in script file
+Reading [Code] section
+Parsing [Tasks] section, line 30
+Parsing [Icons] section, line 36
+Parsing [Icons] section, line 37
+Parsing [Registry] section, line 41
+Parsing [Registry] section, line 42
+Parsing [Registry] section, line 43
+Parsing [Registry] section, line 44
+Parsing [Run] section, line 47
+Parsing [Files] section, line 33
+Creating setup files
+   Verification successful
+   Updating icons (Setup.exe)
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\app_links_plugin.dll
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\dartjni.dll
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\flutter_windows.dll
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\libXray.dll
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\Netro.exe
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\screen_retriever_windows_plugin.dll
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\window_manager_plugin.dll
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\WINTUN-LICENSE.txt
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\wintun.dll
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\app.so
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\icudtl.dat
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\AssetManifest.bin
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\FontManifest.json
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\NativeAssetsManifest.json
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\NOTICES.Z
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\assets\netro_glyph.png
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\fonts\MaterialIcons-Regular.otf
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ac.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ad.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ae.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\af.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ag.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ai.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\al.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\am.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ao.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\aq.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ar.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\as.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\at.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\au.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\aw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ax.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\az.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ba.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bb.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bd.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\be.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bf.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bh.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bi.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bj.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bl.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bo.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bq.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\br.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bs.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bt.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bv.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\by.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\bz.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ca.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cc.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cd.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cefta.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cf.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ch.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ci.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ck.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cl.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\co.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cp.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cu.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cv.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cx.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cy.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\cz.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\de.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\dg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\dj.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\dk.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\dm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\do.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\dz.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ea.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ec.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ee.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\eg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\eh.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\er.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\es-ct.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\es-ga.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\es.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\et.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\eu.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\fi.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\fj.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\fk.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\fm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\fo.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\fr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ga.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gb-eng.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gb-nir.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gb-sct.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gb-wls.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gb.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gd.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ge.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gf.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gh.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gi.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gl.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gp.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gq.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gs.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gt.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gu.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\gy.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\hk.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\hm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\hn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\hr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ht.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\hu.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ic.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\id.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ie.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\il.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\im.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\in.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\io.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\iq.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ir.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\is.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\it.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\je.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\jm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\jo.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\jp.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ke.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\kg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\kh.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ki.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\km.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\kn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\kp.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\kr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\kw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ky.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\kz.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\la.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\lb.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\lc.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\li.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\lk.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\lr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ls.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\lt.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\lu.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\lv.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ly.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ma.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mc.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\md.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\me.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mf.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mh.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mk.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ml.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mo.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mp.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mq.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ms.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mt.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mu.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mv.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mx.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\my.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\mz.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\na.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\nc.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ne.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\nf.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ng.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ni.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\nl.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\no.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\np.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\nr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\nu.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\nz.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\om.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pa.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pe.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pf.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ph.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pk.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pl.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ps.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pt.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\pw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\py.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\qa.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\re.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ro.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\rs.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ru.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\rw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sa.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sb.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sc.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sd.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\se.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sh.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\si.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sj.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sk.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sl.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\so.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ss.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\st.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sv.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sx.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sy.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\sz.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ta.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tc.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\td.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tf.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\th.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tj.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tk.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tl.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\to.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tr.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tt.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tv.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\tz.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ua.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ug.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\um.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\un.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\us.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\uy.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\uz.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\va.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\vc.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ve.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\vg.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\vi.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\vn.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\vu.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\wf.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ws.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\xk.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\xx.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\ye.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\yt.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\za.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\zm.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\country_flags\res\si\zw.si
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\packages\cupertino_icons\assets\CupertinoIcons.ttf
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\shaders\ink_sparkle.frag
+   Compressing: D:\a\netro\netro\installer\..\app\build\windows\x64\runner\Release\data\flutter_assets\shaders\stretch_effect.frag
+   Compressing Setup program executable
+   Updating version info (Setup.exe)
+   Updating manifest (Setup.exe)
+
+
+Successful compile (17.469 sec). Resulting Setup program filename is:
+D:\a\netro\netro\out\Netro-1.2.1-windows-setup.exe
