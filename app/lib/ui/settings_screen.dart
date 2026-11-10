@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 
@@ -6,6 +5,7 @@ import '../app_state.dart';
 import '../core.dart';
 import '../settings.dart';
 import '../sub_service.dart' show appVersion;
+import 'diag_screen.dart';
 import 'kit.dart';
 
 const _pingUrls = {
@@ -88,19 +88,6 @@ class SettingsScreen extends StatelessWidget {
                 onTap: () =>
                     Navigator.of(context).push(smoothRoute(_DnsPage(st: st))),
               ),
-              if (Platform.isAndroid)
-                NavRow(
-                  leading: const RowIcon(Icons.apps_rounded, Color(0xFF8E5CF7)),
-                  title: 'Приложения через VPN',
-                  value: switch (s.split) {
-                    SplitMode.off => 'Все',
-                    SplitMode.exclude => 'Кроме ${s.splitApps.length}',
-                    SplitMode.include => 'Только ${s.splitApps.length}',
-                  },
-                  onTap: () =>
-                      Navigator.of(context)
-                          .push(smoothRoute(_AppsPage(st: st))),
-                ),
             ],
           ),
         ),
@@ -176,6 +163,16 @@ class SettingsScreen extends StatelessWidget {
                       ? 'Ядро Xray'
                       : 'Ядро Xray ${v.data}',
                 ),
+              ),
+              NavRow(
+                leading: const RowIcon(
+                  Icons.health_and_safety_outlined,
+                  Color(0xFF30B0C7),
+                ),
+                title: 'Диагностика',
+                subtitle: 'Проверить связь и скопировать отчёт',
+                onTap: () =>
+                    Navigator.of(context).push(smoothRoute(DiagPage(st: st))),
               ),
               NavRow(
                 leading: const RowIcon(Icons.lan_outlined, Color(0xFF636366)),
@@ -255,14 +252,14 @@ class _DnsPageState extends State<_DnsPage> {
   }
 }
 
-class _AppsPage extends StatefulWidget {
+class AppsPage extends StatefulWidget {
   final AppState st;
-  const _AppsPage({required this.st});
+  const AppsPage({super.key, required this.st});
   @override
-  State<_AppsPage> createState() => _AppsPageState();
+  State<AppsPage> createState() => _AppsPageState();
 }
 
-class _AppsPageState extends State<_AppsPage> {
+class _AppsPageState extends State<AppsPage> {
   List<AppInfo>? _apps;
   String _q = '';
   bool _system = false;

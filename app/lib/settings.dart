@@ -37,6 +37,11 @@ class Settings {
   SplitMode split = SplitMode.off;
   List<String> splitApps = [];
   bool autoBest = false; // перед подключением выбирать сервер с лучшим пингом
+  bool bypassOn = true; // исключения включены
+  List<String> bypassDomains = []; // сайты мимо VPN (домены)
+
+  /// Активные домены-исключения.
+  List<String> get bypassActive => bypassOn ? bypassDomains : const [];
 
   Map<String, dynamic> toJson() => {
     'autoConnect': autoConnect,
@@ -49,6 +54,8 @@ class Settings {
     'split': split.name,
     'splitApps': splitApps,
     'autoBest': autoBest,
+    'bypassOn': bypassOn,
+    'bypassDomains': bypassDomains,
   };
 
   static Settings fromJson(String? raw) {
@@ -72,9 +79,44 @@ class Settings {
       );
       s.splitApps = ((j['splitApps'] as List?) ?? []).cast<String>();
       s.autoBest = j['autoBest'] as bool? ?? s.autoBest;
+      s.bypassOn = j['bypassOn'] as bool? ?? s.bypassOn;
+      s.bypassDomains = ((j['bypassDomains'] as List?) ?? []).cast<String>();
     } catch (_) {}
     return s;
   }
 
   String encode() => jsonEncode(toJson());
 }
+
+/// «https://www.umkh7.com/test?x=1» → «umkh7.com». null — не похоже на сайт.
+String? normalizeDomain(String input) {
+  var t = input.trim().toLowerCase();
+  if (t.isEmpty) return null;
+  t = t.replaceFirst(RegExp(r'^[a-z][a-z0-9+.-]*://'), '');
+  t = t.split(RegExp(r'[/?#]')).first;
+  t = t.split('@').last;
+  t = t.replaceFirst(RegExp(r':\d+$'), '');
+  if (t.startsWith('*.')) t = t.substring(2);
+  if (t.startsWith('www.')) t = t.substring(4);
+  if (t.endsWith('.')) t = t.substring(0, t.length - 1);
+  if (!RegExp(r'^[a-z0-9-]+(\.[a-z0-9-]+)+$').hasMatch(t)) {
+    return null;
+  }
+  return t;
+}
+
+/// Готовые наборы сайтов для быстрого добавления.
+const bypassPresets = <(String, List<String>)>[
+  ('Госуслуги', ['gosuslugi.ru']),
+  ('Ozon', ['ozon.ru', 'ozone.ru']),
+  ('Wildberries', ['wildberries.ru', 'wb.ru', 'wbbasket.ru', 'wbstatic.net']),
+  ('Сбербанк', ['sberbank.ru', 'sber.ru']),
+  ('Т-Банк', ['tbank.ru', 'tinkoff.ru']),
+  ('ВТБ', ['vtb.ru']),
+  ('Альфа-Банк', ['alfabank.ru']),
+  ('Яндекс', ['yandex.ru', 'ya.ru', 'yandex.net']),
+  ('ВКонтакте', ['vk.com', 'vk.ru', 'userapi.com']),
+  ('Авито', ['avito.ru', 'avito.st']),
+  ('Кинопоиск', ['kinopoisk.ru']),
+  ('Мир / НСПК', ['nspk.ru', 'mironline.ru']),
+];

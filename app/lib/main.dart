@@ -9,6 +9,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app_state.dart';
 import 'core.dart';
+import 'ui/bypass_screen.dart';
 import 'ui/add_screen.dart';
 import 'ui/settings_screen.dart';
 import 'ui/home_screen.dart';
@@ -176,6 +177,7 @@ class _ShellState extends State<Shell> {
       ),
       ServersScreen(st: st, openAdd: _openAdd),
       SubsScreen(st: st, openAdd: _openAdd),
+      BypassScreen(st: st),
       SettingsScreen(st: st),
     ];
     return ScaffoldMessenger(
@@ -264,9 +266,10 @@ class _TabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      (Icons.power_settings_new_rounded, 'Подключение'),
+      (Icons.power_settings_new_rounded, 'Главная'),
       (Icons.public_rounded, 'Серверы'),
       (Icons.layers_outlined, 'Подписки'),
+      (Icons.alt_route_rounded, 'Исключения'),
       (Icons.tune_rounded, 'Настройки'),
     ];
     return ClipRect(

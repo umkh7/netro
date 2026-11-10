@@ -39,6 +39,20 @@ final class NetroCore: NSObject, FlutterStreamHandler {
       result(nil)
     case "state":
       result(stateName)
+    case "tunnel":
+      // Счётчики трафика и журнал ядра — спрашиваем у VPN-расширения.
+      guard let session = manager?.connection as? NETunnelProviderSession,
+            session.status == .connected || session.status == .reasserting
+      else { result(nil); return }
+      do {
+        try session.sendProviderMessage(Data("info".utf8)) { data in
+          DispatchQueue.main.async {
+            result(data.flatMap { String(data: $0, encoding: .utf8) })
+          }
+        }
+      } catch {
+        result(nil)
+      }
     default:
       result(FlutterMethodNotImplemented)
     }

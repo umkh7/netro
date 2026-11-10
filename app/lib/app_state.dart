@@ -315,19 +315,24 @@ class AppState extends ChangeNotifier {
   /// Пинг серверов подписки. Пока VPN включён, ядро занято — пинг недоступен.
   Future<void> pingSub(Subscription s, {bool quiet = false}) async {
     if (pinging) return;
-    if (!quiet && (conn == ConnState.on || conn == ConnState.connecting)) {
-      lastError = 'Отключите VPN, чтобы проверить пинг';
-      notifyListeners();
-      return;
-    }
+    final busy = conn == ConnState.on || conn == ConnState.connecting;
+    if (busy && quiet) return;
     pinging = true;
     notifyListeners();
     try {
-      final d = await Core.ping(
-        s.servers.map((e) => e.outbound).toList(),
-        url: settings.pingUrl,
-        timeout: settings.pingTimeout,
-      );
+      // Пока VPN включён, ядро занято (а на iPhone проверка шла бы через сам
+      // туннель) — тогда меряем время соединения с сервером напрямую (TCP).
+      final d = busy
+          ? await Future.wait(
+              s.servers.map(
+                (e) => Core.tcpPing(e.outbound, timeout: settings.pingTimeout),
+              ),
+            )
+          : await Core.ping(
+              s.servers.map((e) => e.outbound).toList(),
+              url: settings.pingUrl,
+              timeout: settings.pingTimeout,
+            );
       for (var i = 0; i < s.servers.length && i < d.length; i++) {
         s.servers[i].ping = d[i];
       }

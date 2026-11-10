@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:netro/app_state.dart';
 import 'package:netro/models.dart';
+import 'package:netro/ui/bypass_screen.dart';
 import 'package:netro/ui/home_screen.dart';
 import 'package:netro/ui/kit.dart';
 import 'package:netro/ui/servers_screen.dart';
@@ -96,4 +97,9 @@ void main() {
   testWidgets('servers', (t) async => shot(t, '3-servers', ServersScreen(st: _demo(), openAdd: () {})));
   testWidgets('subs', (t) async => shot(t, '4-subs', SubsScreen(st: _demo(), openAdd: () {})));
   testWidgets('settings', (t) async => shot(t, '5-settings', SettingsScreen(st: _demo())));
+  testWidgets('bypass', (t) async {
+    final st = _demo();
+    st.settings.bypassDomains = ['umkh7.com', 'gosuslugi.ru', 'ozon.ru', 'ozone.ru'];
+    await shot(t, '6-bypass', BypassScreen(st: st));
+  });
 }

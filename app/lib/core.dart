@@ -141,27 +141,160 @@ class Core {
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
-  /// IP и страна выхода — запрос идёт через локальный прокси Netro, то есть через VPN.
+  /// IP и страна выхода. На телефоне весь трафик и так идёт через VPN —
+  /// спрашиваем напрямую (несколько сервисов сразу, кто ответит первым).
+  /// На Windows в режиме прокси — через локальный прокси Netro.
   static Future<Map<String, dynamic>?> ipInfo() async {
-    final c = HttpClient()
-      ..findProxy = ((_) => 'PROXY 127.0.0.1:$httpPort')
-      ..connectionTimeout = const Duration(seconds: 6);
+    final viaProxy = _isWin && _winMode == ConnMode.proxy;
+    Future<Map<String, dynamic>?> one(
+      String url,
+      Map<String, dynamic>? Function(Map<String, dynamic>) map,
+    ) async {
+      final c = HttpClient()
+        ..findProxy = ((_) => viaProxy ? 'PROXY 127.0.0.1:$httpPort' : 'DIRECT')
+        ..connectionTimeout = const Duration(seconds: 6);
+      try {
+        final rq = await c.getUrl(Uri.parse(url));
+        rq.headers.set('User-Agent', 'Netro');
+        final rs = await rq.close().timeout(const Duration(seconds: 8));
+        final j = jsonDecode(
+          await rs.transform(utf8.decoder).join(),
+        ) as Map<String, dynamic>;
+        return map(j);
+      } catch (_) {
+        return null;
+      } finally {
+        c.close(force: true);
+      }
+    }
+
+    final tries = [
+      one(
+        'https://ipwho.is/?fields=ip,country,country_code,city,connection',
+        (j) => j['ip'] == null ? null : j,
+      ),
+      one(
+        'https://api.ip.sb/geoip',
+        (j) => j['ip'] == null
+            ? null
+            : {
+                'ip': j['ip'],
+                'country': j['country'],
+                'country_code': j['country_code'],
+                'city': j['city'],
+                'connection': {'isp': j['isp'] ?? j['organization']},
+              },
+      ),
+      one(
+        'https://ipapi.co/json/',
+        (j) => j['ip'] == null
+            ? null
+            : {
+                'ip': j['ip'],
+                'country': j['country_name'],
+                'country_code': j['country_code'],
+                'city': j['city'],
+                'connection': {'isp': j['org']},
+              },
+      ),
+    ];
+    final done = Completer<Map<String, dynamic>?>();
+    var left = tries.length;
+    for (final t in tries) {
+      t.then((v) {
+        if (v != null && !done.isCompleted) done.complete(v);
+        if (--left == 0 && !done.isCompleted) done.complete(null);
+      });
+    }
+    return done.future.timeout(
+      const Duration(seconds: 12),
+      onTimeout: () => null,
+    );
+  }
+
+  /// iOS: сведения от VPN-расширения — счётчики utun и журнал ядра.
+  static Future<Map<String, dynamic>?> tunnelInfo() async {
+    if (!Platform.isIOS) return null;
     try {
-      final rq = await c.getUrl(
-        Uri.parse(
-          'https://ipwho.is/?fields=ip,country,country_code,city,connection',
-        ),
-      );
-      rq.headers.set('User-Agent', 'Netro');
-      final rs = await rq.close().timeout(const Duration(seconds: 8));
-      final j = jsonDecode(
-        await rs.transform(utf8.decoder).join(),
-      ) as Map<String, dynamic>;
-      return j['ip'] == null ? null : j;
+      final r = await _ch.invokeMethod<String>('tunnel');
+      if (r == null) return null;
+      return jsonDecode(r) as Map<String, dynamic>;
     } catch (_) {
       return null;
-    } finally {
-      c.close(force: true);
+    }
+  }
+
+  /// Подробный пинг одного сервера — для диагностики (с текстом ошибки ядра).
+  static Future<String> pingDetail(
+    Map<String, dynamic> outbound, {
+    String url = 'https://cp.cloudflare.com/',
+    int timeout = 5,
+  }) async {
+    try {
+      final ob = Map<String, dynamic>.from(outbound)..['tag'] = 'proxy';
+      final d = await _invoke('pingBatch', {
+        'configs': [
+          {
+            'xrayJson': jsonEncode({
+              'outbounds': [ob],
+            }),
+          },
+        ],
+        'timeout': timeout,
+        'url': url,
+      });
+      final r = ((d['results'] as List?) ?? []).firstOrNull as Map?;
+      if (r == null) return 'нет ответа';
+      final delay = (r['delay'] as num?)?.toInt() ?? 10000;
+      if (delay < 10000) return '$delay мс';
+      return '${delay >= 11000 ? 'таймаут' : 'ошибка'}: ${r['error'] ?? ''}';
+    } catch (e) {
+      return 'ошибка: $e';
+    }
+  }
+
+  /// Адрес и порт сервера из outbound — для TCP-проверки.
+  static (String, int)? endpoint(Map<String, dynamic> ob) {
+    final s = (ob['settings'] as Map?) ?? {};
+    Map? first(String k) {
+      final l = s[k];
+      return (l is List && l.isNotEmpty && l.first is Map)
+          ? l.first as Map
+          : null;
+    }
+
+    final m = first('vnext') ?? first('servers') ?? first('peers') ?? s;
+    var host = (m['address'] ?? m['endpoint'] ?? '').toString();
+    var port = (m['port'] as num?)?.toInt() ?? 0;
+    if (port == 0 && host.contains(':')) {
+      final i = host.lastIndexOf(':');
+      port = int.tryParse(host.substring(i + 1)) ?? 0;
+      host = host.substring(0, i).replaceAll('[', '').replaceAll(']', '');
+    }
+    if (host.isEmpty || port == 0) return null;
+    return (host, port);
+  }
+
+  /// Время TCP-соединения с сервером, мс (11000 — не ответил).
+  static Future<int> tcpPing(Map<String, dynamic> ob, {int timeout = 5}) async {
+    final ep = endpoint(ob);
+    if (ep == null) return 10000;
+    final sw = Stopwatch()..start();
+    try {
+      final s = await Socket.connect(
+        ep.$1,
+        ep.$2,
+        timeout: Duration(seconds: timeout),
+      );
+      sw.stop();
+      s.destroy();
+      return sw.elapsedMilliseconds.clamp(1, 9999);
+    } on SocketException catch (e) {
+      return (e.osError == null && sw.elapsed.inSeconds >= timeout)
+          ? 11000
+          : 10000;
+    } catch (_) {
+      return 11000;
     }
   }
 
@@ -235,6 +368,11 @@ class Core {
   /// Счётчики трафика outbound «proxy»: [скачано, отдано] байт с запуска.
   /// Берутся из встроенного сервера метрик Xray на 127.0.0.1:[metricsPort].
   static Future<List<int>?> trafficTotals() async {
+    if (Platform.isIOS) {
+      final t = await tunnelInfo();
+      if (t == null) return null;
+      return [(t['rx'] as num?)?.toInt() ?? 0, (t['tx'] as num?)?.toInt() ?? 0];
+    }
     try {
       final c = await HttpClientLite.get(
         'http://127.0.0.1:$metricsPort/debug/vars',

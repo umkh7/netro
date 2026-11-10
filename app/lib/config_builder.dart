@@ -81,6 +81,12 @@ Map<String, dynamic> buildXrayConfig(
     'routing': {
       'domainStrategy': 'AsIs',
       'rules': [
+        if (st.bypassActive.isNotEmpty)
+          {
+            'type': 'field',
+            'domain': [for (final d in st.bypassActive) 'domain:$d'],
+            'outboundTag': 'direct',
+          },
         if (st.lanDirect)
           {'type': 'field', 'ip': _privateNets, 'outboundTag': 'direct'},
         if (st.ruDirect)
