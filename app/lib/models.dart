@@ -3,8 +3,8 @@ import 'dart:convert';
 /// Один сервер (outbound Xray) внутри подписки.
 class Server {
   final String id; // стабильный id внутри приложения
-  final String name; // имя без флага
-  final String country; // ISO-код страны в нижнем регистре или ''
+  String name; // имя без флага (может замениться страной выхода)
+  String country; // ISO-код страны в нижнем регистре или ''
   final String protocol; // «VLESS · Reality»
   final String emoji; // флаг-эмодзи из названия (запасной значок)
   final Map<String, dynamic> outbound; // готовый outbound для Xray

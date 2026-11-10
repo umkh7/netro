@@ -198,3 +198,128 @@ CountryGuess guessCountry(String raw) {
   if (code == 'uk') code = 'gb';
   return CountryGuess(code, name, emoji);
 }
+
+/// Русские названия стран — для переименования сервера по реальной стране выхода.
+const countryRu = <String, String>{
+  'nl': 'Нидерланды',
+  'de': 'Германия',
+  'fi': 'Финляндия',
+  'se': 'Швеция',
+  'tr': 'Турция',
+  'us': 'США',
+  'ru': 'Россия',
+  'kz': 'Казахстан',
+  'fr': 'Франция',
+  'pl': 'Польша',
+  'gb': 'Великобритания',
+  'lv': 'Латвия',
+  'lt': 'Литва',
+  'ee': 'Эстония',
+  'at': 'Австрия',
+  'ch': 'Швейцария',
+  'it': 'Италия',
+  'es': 'Испания',
+  'pt': 'Португалия',
+  'cz': 'Чехия',
+  'sg': 'Сингапур',
+  'jp': 'Япония',
+  'hk': 'Гонконг',
+  'kr': 'Корея',
+  'ae': 'ОАЭ',
+  'ca': 'Канада',
+  'id': 'Индонезия',
+  'ge': 'Грузия',
+  'am': 'Армения',
+  'ua': 'Украина',
+  'md': 'Молдова',
+  'ro': 'Румыния',
+  'bg': 'Болгария',
+  'rs': 'Сербия',
+  'hu': 'Венгрия',
+  'no': 'Норвегия',
+  'dk': 'Дания',
+  'ie': 'Ирландия',
+  'be': 'Бельгия',
+  'in': 'Индия',
+  'br': 'Бразилия',
+  'au': 'Австралия',
+  'il': 'Израиль',
+  'th': 'Таиланд',
+  'vn': 'Вьетнам',
+  'uz': 'Узбекистан',
+  'by': 'Беларусь',
+  'mk': 'Сев. Македония',
+  'gr': 'Греция',
+  'cy': 'Кипр',
+  'lu': 'Люксембург',
+  'is': 'Исландия',
+  'my': 'Малайзия',
+  'ph': 'Филиппины',
+  'tw': 'Тайвань',
+  'mx': 'Мексика',
+  'ar': 'Аргентина',
+  'za': 'ЮАР',
+  'eg': 'Египет',
+  'az': 'Азербайджан',
+  'kg': 'Киргизия',
+  'tj': 'Таджикистан',
+  'tm': 'Туркменистан',
+  'si': 'Словения',
+  'sk': 'Словакия',
+  'hr': 'Хорватия',
+  'al': 'Албания',
+  'me': 'Черногория',
+};
+
+/// Слова-регионы и «авто»-названия, которые тоже заменяются страной.
+const _regionWords = [
+  'северная македония',
+  'north macedonia',
+  'united states',
+  'united kingdom',
+  'hong kong',
+  'new york',
+  'европа',
+  'europe',
+  'евро',
+  'мир',
+  'world',
+  'глобал',
+  'global',
+  'стелс',
+  'stealth',
+];
+
+/// «Швеция LTE» + nl → «Нидерланды LTE»; «Европа LTE · 1» → «Нидерланды LTE · 1»;
+/// «Авто LTE 🚀» → «Нидерланды · Авто LTE 🚀».
+String renameForCountry(String name, String cc) {
+  final ru = countryRu[cc];
+  if (ru == null) return name;
+  if (name.toLowerCase().contains(ru.toLowerCase())) return name;
+  final low = name.toLowerCase();
+  // 1) длинные названия («Северная Македония», «United States»)
+  for (final w in _regionWords) {
+    final i = low.indexOf(w);
+    if (i >= 0 && w.length > 4 && !const ['мир', 'world'].contains(w)) {
+      final end = _wordEnd(name, i + w.length);
+      return _tidy(name.replaceRange(i, end, ru));
+    }
+  }
+  // 2) первое слово, похожее на страну или город
+  final words = RegExp(r'[\p{L}\-]+', unicode: true).allMatches(name);
+  for (final m in words) {
+    final wl = ' ${m.group(0)!.toLowerCase()}';
+    final hit = _names.keys.any((k) => wl.contains(k) && k.trim().length >= 3);
+    if (hit) return _tidy(name.replaceRange(m.start, m.end, ru));
+  }
+  return '$ru · $name';
+}
+
+int _wordEnd(String s, int i) {
+  while (i < s.length && RegExp(r'[\p{L}]', unicode: true).hasMatch(s[i])) {
+    i++;
+  }
+  return i;
+}
+
+String _tidy(String s) => s.replaceAll(RegExp(r'\s+'), ' ').trim();

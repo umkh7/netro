@@ -4,7 +4,10 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'dart:convert';
+
 import 'config_builder.dart';
+import 'country.dart';
 import 'core.dart';
 import 'models.dart';
 import 'settings.dart';
@@ -26,6 +29,31 @@ class AppState extends ChangeNotifier {
   bool ipLoading = false;
   int sessionDown = 0, sessionUp = 0;
 
+  /// Реальная страна выхода серверов (узнаём по IP после подключения).
+  Map<String, String> _exit = {};
+
+  static String _key(Server s) {
+    var h = 0x811c9dc5;
+    for (final c in utf8.encode(jsonEncode(s.outbound))) {
+      h = ((h ^ c) * 0x01000193) & 0xffffffff;
+    }
+    return h.toRadixString(16);
+  }
+
+  void _applyExit(Iterable<Server> list) {
+    for (final s in list) {
+      final cc = _exit[_key(s)];
+      if (cc == null || cc.isEmpty) continue;
+      if (s.country != cc ||
+          !s.name.toLowerCase().contains(
+            (countryRu[cc] ?? '~').toLowerCase(),
+          )) {
+        s.name = renameForCountry(s.name, cc);
+        s.country = cc;
+      }
+    }
+  }
+
   late SharedPreferences _p;
   StreamSubscription? _stateSub;
   Timer? _ticker;
@@ -38,6 +66,13 @@ class AppState extends ChangeNotifier {
       try {
         subs = Subscription.decodeList(raw);
       } catch (_) {}
+    }
+    try {
+      _exit = (jsonDecode(_p.getString('exit') ?? '{}') as Map)
+          .cast<String, String>();
+    } catch (_) {}
+    for (final x in subs) {
+      _applyExit(x.servers);
     }
     selectedId = _p.getString('selected');
     mode = _p.getString('mode') == 'proxy' ? ConnMode.proxy : ConnMode.tun;
@@ -79,6 +114,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     ip = await Core.ipInfo();
     ipLoading = false;
+    // Название сервера — по реальной стране выхода.
+    final cc = (ip?['country_code'] as String?)?.toLowerCase() ?? '';
+    final cur = selected;
+    if (cur != null && cc.length == 2 && countryRu.containsKey(cc)) {
+      _exit[_key(cur)] = cc;
+      await _p.setString('exit', jsonEncode(_exit));
+      if (cur.country != cc) {
+        _applyExit([cur]);
+        await _save();
+      }
+    }
     notifyListeners();
   }
 
@@ -225,6 +271,7 @@ class AppState extends ChangeNotifier {
       }
       final id = newId();
       final r = await fetchSubscription(t, id);
+      _applyExit(r.servers);
       final sub = Subscription(
         id: id,
         title: r.title,
@@ -283,6 +330,7 @@ class AppState extends ChangeNotifier {
         ..totalBytes = r.total
         ..supportUrl = r.supportUrl
         ..webPageUrl = r.webPageUrl;
+      _applyExit(s.servers);
       // Сохраняем выбор по имени, если id поменялся.
       if (oldSel != null && !allServers.any((x) => x.id == selectedId)) {
         final same = s.servers.where((x) => x.name == oldSel.name).firstOrNull;
